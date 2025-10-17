@@ -96,7 +96,7 @@ Updates the NSD minting configuration.
 Sets metadata for NSD tokens.
 
 **Accounts:**
-- `fee_payer` - Writable, signer
+- `fee_payer` - Writable, signer 
 - `config` - Writable
 - `metadata` - Writable
 - `admin` - Signer
