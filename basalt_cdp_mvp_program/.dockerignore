@@ -1,0 +1,31 @@
+# Build artifacts
+target/
+node_modules/
+dist/
+build/
+*.so
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Anchor
+.anchor/

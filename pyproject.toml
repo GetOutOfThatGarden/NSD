@@ -1,0 +1,13 @@
+[tool.anchor]
+version = "0.29.0"
+edition = "2021"
+
+[tool.anchor.solana]
+version = "1.16.14"
+
+[tool.anchor.dependencies]
+spl = "0.29.0"
+
+[tool.anchor.features]
+no-entrypoint = []
+cpi = ["no-entrypoint"]
