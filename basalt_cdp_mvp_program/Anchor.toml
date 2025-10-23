@@ -1,5 +1,8 @@
-[programs.basalt_cdp_mvp]
-path = "programs/basalt_cdp_mvp"
+[toolchain]
+anchor_version = "0.31.1"
+
+[programs.devnet]
+basalt_cdp_mvp = "8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3"
 
 [registry]
 url = "https://anchor.projectserum.com"

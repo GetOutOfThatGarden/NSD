@@ -6,7 +6,7 @@
 
 use anchor_lang::prelude::*;
 use anchor_spl::{
-    token::{Token, TokenAccount, Mint, Transfer},
+    token::{Token, TokenAccount, Mint, Transfer, Burn},
     associated_token::AssociatedToken,
 };
 use crate::state::protocol_config::ProtocolConfig;
@@ -55,7 +55,7 @@ pub struct LiquidateVault<'info> {
     pub token_program: Program<'info, Token>,
 }
 
-pub fn liquidate_vault(ctx: Context<LiquidateVault>, vault: Pubkey) -> Result<()> {
+pub fn liquidate_vault(ctx: Context<LiquidateVault>, _vault: Pubkey) -> Result<()> {
     let user_vault = &mut ctx.accounts.user_vault;
     let protocol_config = &ctx.accounts.protocol_config;
     
@@ -97,7 +97,7 @@ pub fn liquidate_vault(ctx: Context<LiquidateVault>, vault: Pubkey) -> Result<()
         ctx.accounts.token_program.to_account_info(),
         anchor_spl::token::Burn {
             mint: ctx.accounts.usdrw_mint.to_account_info(),
-            to: ctx.accounts.user_collateral_account.to_account_info(),
+            from: ctx.accounts.user_collateral_account.to_account_info(),
             authority: ctx.accounts.user.to_account_info(),
         },
     );

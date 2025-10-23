@@ -4,6 +4,7 @@
 //! with the required parameters and settings.
 
 use anchor_lang::prelude::*;
+use anchor_spl::token::Mint;
 use crate::state::protocol_config::ProtocolConfig;
 use crate::constants::*;
 

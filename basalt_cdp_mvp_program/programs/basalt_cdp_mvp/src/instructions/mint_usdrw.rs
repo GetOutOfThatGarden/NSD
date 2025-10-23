@@ -35,12 +35,8 @@ pub struct MintUsdrw<'info> {
     /// The user's collateral token account
     pub user_collateral_account: Account<'info, TokenAccount>,
     
-    /// The protocol's collateral token account (pda)
-    #[account(
-        mut,
-        seeds = [b"collateral_vault", protocol_config.key().as_ref()],
-        bump
-    )]
+    /// The protocol's collateral vault account
+    #[account(mut)]
     pub protocol_collateral_account: Account<'info, TokenAccount>,
     
     /// The user's USD_RW token account
@@ -58,7 +54,7 @@ pub struct MintUsdrw<'info> {
 
 pub fn mint_usdrw(ctx: Context<MintUsdrw>, amount: u64) -> Result<()> {
     let user_vault = &mut ctx.accounts.user_vault;
-    let protocol_config = &ctx.accounts.protocol_config;
+    let _protocol_config = &ctx.accounts.protocol_config;
     
     // Validate that the amount is above minimum
     if amount < MIN_COLLATERAL_AMOUNT {

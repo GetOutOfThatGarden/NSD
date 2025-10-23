@@ -11,7 +11,7 @@ pub mod error;
 use anchor_lang::prelude::*;
 use instructions::*;
 
-declare_id!("BasaltCdpMvp11111111111111111111111111111111111");
+declare_id!("8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3");
 
 #[program]
 pub mod basalt_cdp_mvp {
@@ -20,8 +20,8 @@ pub mod basalt_cdp_mvp {
     /// Initialize the protocol with configuration parameters
     pub fn initialize_protocol(
         ctx: Context<InitializeProtocol>,
-        collateral_mint: Pubkey,
-        usdrw_mint: Pubkey,
+        _collateral_mint: Pubkey,
+        _usdrw_mint: Pubkey,
     ) -> Result<()> {
         initialize_protocol::initialize_protocol(ctx)
     }

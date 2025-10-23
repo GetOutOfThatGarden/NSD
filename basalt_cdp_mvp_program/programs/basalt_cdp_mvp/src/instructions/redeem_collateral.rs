@@ -53,7 +53,7 @@ pub struct RedeemCollateral<'info> {
 
 pub fn redeem_collateral(ctx: Context<RedeemCollateral>, amount: u64) -> Result<()> {
     let user_vault = &mut ctx.accounts.user_vault;
-    let protocol_config = &ctx.accounts.protocol_config;
+    let _protocol_config = &ctx.accounts.protocol_config;
     
     // Validate that the user has debt to redeem
     if user_vault.debt_amount == 0 {
@@ -84,7 +84,7 @@ pub fn redeem_collateral(ctx: Context<RedeemCollateral>, amount: u64) -> Result<
         ctx.accounts.token_program.to_account_info(),
         anchor_spl::token::Burn {
             mint: ctx.accounts.usdrw_mint.to_account_info(),
-            to: ctx.accounts.user_usdrw_account.to_account_info(),
+            from: ctx.accounts.user_usdrw_account.to_account_info(),
             authority: ctx.accounts.user.to_account_info(),
         },
     );
