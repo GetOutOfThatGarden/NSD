@@ -15,10 +15,10 @@ export interface SolanaConfig {
  * Replace these with your actual deployed program IDs
  */
 const PROGRAM_IDS: Record<ClusterType, string> = {
-  'localhost': 'BasaltCdpMvp11111111111111111111111111111111111',
-  'devnet': 'BasaltCdpMvp11111111111111111111111111111111111',
-  'testnet': 'BasaltCdpMvp11111111111111111111111111111111111',
-  'mainnet-beta': 'BasaltCdpMvp11111111111111111111111111111111111'
+  'localhost': '8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3',
+  'devnet': '8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3',
+  'testnet': '8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3',
+  'mainnet-beta': '8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3'
 };
 
 /**

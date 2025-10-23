@@ -13,7 +13,8 @@ solana config set --url https://api.devnet.solana.com
 
 # 2. Set the wallet keypair
 echo "🔑 Setting wallet keypair..."
-solana config set --keypair /Users/user2/.config/solana/basalt.json
+WALLET_PATH="${SOLANA_WALLET:-~/.config/solana/id.json}"
+solana config set --keypair "$WALLET_PATH"
 
 # 3. Check current configuration
 echo "⚙️  Current Solana configuration:"
@@ -39,7 +40,7 @@ echo "💰 Final balance:"
 solana balance
 
 # 7. Show devnet explorer link
-PUBKEY=$(solana-keygen pubkey /Users/user2/.config/solana/basalt.json)
+PUBKEY=$(solana-keygen pubkey "$WALLET_PATH")
 echo "🔍 View your account on Solana Devnet Explorer:"
 echo "https://explorer.solana.com/address/$PUBKEY?cluster=devnet"
 

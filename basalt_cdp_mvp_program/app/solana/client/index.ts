@@ -2,7 +2,7 @@ import { Connection, PublicKey } from '@solana/web3.js';
 import { Program, AnchorProvider, web3 } from '@coral-xyz/anchor';
 import { BasaltCdpMvp } from '../target/types/basalt_cdp_mvp';
 
-export const PROGRAM_ID = new PublicKey('BasaltCdpMvp11111111111111111111111111111111111');
+export const PROGRAM_ID = new PublicKey('8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3');
 
 export const getProgram = (
   connection: Connection = defaultConnection, 

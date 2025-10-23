@@ -1,5 +1,5 @@
 # BASALT CDP Protocol MVP
-
+sr
 ## Project Overview and Purpose
 
 The BASALT CDP (Collateralized Debt Position) Protocol MVP is a decentralized finance (DeFi) application built on the Solana blockchain that enables users to borrow synthetic assets against collateral. This implementation focuses on creating a secure, efficient, and scalable CDP system with core functionalities including minting, redeeming, and liquidating positions.
