@@ -1,5 +1,9 @@
 # BASALT CDP Protocol MVP
-sr
+
+🚀 **Status**: Security-audited and ready for devnet deployment  
+🔒 **Security**: Comprehensive security audit completed  
+🌐 **Network**: Configured for Solana Devnet  
+
 ## Project Overview and Purpose
 
 The BASALT CDP (Collateralized Debt Position) Protocol MVP is a decentralized finance (DeFi) application built on the Solana blockchain that enables users to borrow synthetic assets against collateral. This implementation focuses on creating a secure, efficient, and scalable CDP system with core functionalities including minting, redeeming, and liquidating positions.
@@ -148,6 +152,29 @@ Create a `.env` file with:
 ANCHOR_WALLET=~/.config/solana/id.json
 ```
 
+### Devnet Deployment
+
+The project is configured for Solana Devnet deployment:
+
+1. **Deploy to Devnet**:
+```bash
+./scripts/deploy-devnet.sh
+```
+
+2. **Setup Devnet Environment**:
+```bash
+./scripts/setup-devnet.sh
+```
+
+3. **Verify Deployment**:
+```bash
+solana program show <PROGRAM_ID> --url devnet
+```
+
+**Important**: This is a devnet deployment for testing purposes only. Use test SOL from the devnet faucet.
+
+**Note**: The README.md file is not uploaded to the Solana blockchain during deployment. Only the compiled program bytecode is deployed to devnet. This documentation remains in the repository for development reference.
+
 ## User Workflow
 
 ### Borrowing Process
@@ -169,7 +196,16 @@ ANCHOR_WALLET=~/.config/solana/id.json
 4. Liquidator receives collateral at a discount
 5. Vault debt is reduced
 
-## Security Considerations and Best Practices
+## Security Audit and Considerations
+
+### Security Audit Status ✅
+The protocol has undergone a comprehensive security audit covering:
+
+- **Program Code Security**: All instructions validated for proper access controls
+- **Configuration Security**: No hardcoded secrets or sensitive data exposed
+- **Wallet Security**: Test wallet files removed, `.gitignore` updated
+- **Access Control Validation**: User permissions and vault ownership verified
+- **Deployment Scripts**: Clean and secure deployment configuration
 
 ### Security Measures
 - **Account Validation**: All accounts are validated before processing
@@ -177,6 +213,8 @@ ANCHOR_WALLET=~/.config/solana/id.json
 - **Interest Calculation**: Accurate time-based interest accrual
 - **Reentrancy Protection**: Prevents malicious reentrancy attacks
 - **Input Validation**: All parameters are strictly validated
+- **Vault Ownership**: Strict validation of vault ownership in all operations
+- **Liquidation Logic**: Secure undercollateralization checks
 
 ### Best Practices
 - **Use Fixed-Point Arithmetic**: Prevents floating-point precision errors
@@ -184,6 +222,7 @@ ANCHOR_WALLET=~/.config/solana/id.json
 - **Validate All Accounts**: Ensure account ownership and permissions
 - **Test Edge Cases**: Include tests for boundary conditions
 - **Monitor Gas Costs**: Optimize instruction efficiency
+- **Secure Development**: No sensitive files in version control
 
 ## Directory Structure and Codebase Organization
 

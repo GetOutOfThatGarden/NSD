@@ -29,3 +29,12 @@ Thumbs.db
 
 # Anchor
 .anchor/
+
+# Wallet files and keypairs
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+*-keypair.json
+*wallet*.json
+test-ledger/
