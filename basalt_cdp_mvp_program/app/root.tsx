@@ -1,6 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import { SolanaProvider } from './solana/SolanaProvider';
-import { Home } from './routes/home';
+import Home from './routes/home';
 import { Docs } from './routes/docs';
 import { Header } from './components/Header';
 import { Outlet, RouterProvider, createBrowserRouter } from 'react-router-dom';
