@@ -5,8 +5,25 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:devnet": "REACT_APP_SOLANA_CLUSTER=devnet vite",
+    "dev:localhost": "REACT_APP_SOLANA_CLUSTER=localhost vite",
+    "dev:testnet": "REACT_APP_SOLANA_CLUSTER=testnet vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "build:devnet": "REACT_APP_SOLANA_CLUSTER=devnet vite build",
+    "build:mainnet": "REACT_APP_SOLANA_CLUSTER=mainnet-beta vite build",
+    "preview": "vite preview",
+    "anchor:build": "anchor build",
+    "anchor:deploy": "anchor deploy",
+    "anchor:deploy:devnet": "anchor deploy --provider.cluster devnet",
+    "anchor:test": "anchor test",
+    "anchor:localnet": "solana-test-validator",
+    "devnet:setup": "chmod +x scripts/setup-devnet.sh && ./scripts/setup-devnet.sh",
+    "devnet:deploy": "chmod +x scripts/deploy-devnet.sh && ./scripts/deploy-devnet.sh",
+    "devnet:test": "ts-node scripts/test-devnet.ts",
+    "devnet:airdrop": "solana airdrop 2 --url https://api.devnet.solana.com",
+    "devnet:balance": "solana balance --url https://api.devnet.solana.com",
+    "devnet:config": "solana config get",
+    "devnet:explorer": "echo 'https://explorer.solana.com/address/'$(solana-keygen pubkey /Users/user2/.config/solana/basalt.json)'?cluster=devnet'"
   },
   "dependencies": {
     "@solana/wallet-adapter-react": "^0.15.30",

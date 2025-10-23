@@ -4,14 +4,37 @@ import { BasaltCdpMvp } from '../target/types/basalt_cdp_mvp';
 
 export const PROGRAM_ID = new PublicKey('BasaltCdpMvp11111111111111111111111111111111111');
 
-export const getProgram = (connection: Connection, wallet: any): Program<BasaltCdpMvp> => {
-  const provider = new AnchorProvider(connection, wallet, AnchorProvider.defaultOptions());
+export const getProgram = (
+  connection: Connection = defaultConnection, 
+  wallet: any
+): Program<BasaltCdpMvp> => {
+  const provider = new AnchorProvider(
+    connection, 
+    wallet, 
+    {
+      ...AnchorProvider.defaultOptions(),
+      commitment: SOLANA_CONFIG.commitment,
+      preflightCommitment: SOLANA_CONFIG.commitment,
+    }
+  );
   const program = new Program<BasaltCdpMvp>(
     IDL,
     PROGRAM_ID,
     provider
   );
   return program;
+};
+
+/**
+ * Create a program instance with a specific connection
+ * Useful for testing or connecting to different clusters
+ */
+export const createProgram = (
+  cluster: 'devnet' | 'testnet' | 'mainnet-beta' | 'localhost',
+  wallet: any
+): Program<BasaltCdpMvp> => {
+  const connection = createSolanaConnection(cluster);
+  return getProgram(connection, wallet);
 };
 
 export const getVaultPda = (user: PublicKey, protocolConfig: PublicKey): [PublicKey, number] => {
