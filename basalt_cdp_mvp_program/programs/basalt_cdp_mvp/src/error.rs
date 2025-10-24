@@ -66,4 +66,16 @@ pub enum CdpError {
     /// Error when the user tries to mint with insufficient collateral
     #[msg("Insufficient collateral for minting")]
     InsufficientCollateralForMint,
+    
+    /// Error when an invalid protocol admin address is provided
+    #[msg("Invalid protocol admin address")]
+    InvalidProtocolAdmin,
+    
+    /// Error when unauthorized user tries to initialize protocol
+    #[msg("Unauthorized protocol initialization")]
+    UnauthorizedProtocolInitialization,
+    
+    /// Error when mint configuration is invalid
+    #[msg("Invalid mint configuration")]
+    InvalidMintConfiguration,
 }

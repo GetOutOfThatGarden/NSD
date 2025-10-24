@@ -1,7 +1,7 @@
 import { useWallet } from '@solana/wallet-adapter-react';
 import useSWR from 'swr';
 import { PublicKey } from '@solana/web3.js';
-import { PROGRAM_ID, getProtocolConfigPda } from './client';
+import { PROGRAM_ID, getProtocolConfigPda, getVaultPda } from './client';
 import { 
   getProtocolConfigWithErrorHandling, 
   getUserVaultWithErrorHandling 
@@ -27,27 +27,39 @@ interface ProtocolConfig {
   totalCollateral: number;
 }
 
-// SWR fetcher functions
+// Fetcher functions for SWR
 const fetchProtocolConfig = async (): Promise<ProtocolConfig | null> => {
   const [protocolConfigPda] = getProtocolConfigPda();
   const result = await getProtocolConfigWithErrorHandling(protocolConfigPda);
+  
   if (result.data) {
-    return result.data;
+    return result.data as ProtocolConfig;
   }
-  if (result.error?.code === 'ACCOUNT_NOT_FOUND') {
+  
+  // Handle account not found and initialization errors gracefully - return null instead of throwing
+  if (result.error?.code === 'ACCOUNT_NOT_FOUND' || 
+      (result.error?.message && result.error.message.includes('Program not initialized'))) {
     return null;
   }
+  
   throw new Error(result.error?.message || 'Failed to fetch protocol config');
 };
 
 const fetchUserVault = async (publicKey: PublicKey): Promise<UserVault | null> => {
-  const result = await getUserVaultWithErrorHandling(publicKey);
+  const [protocolConfigPda] = getProtocolConfigPda();
+  const [vaultPda] = getVaultPda(publicKey, protocolConfigPda);
+  const result = await getUserVaultWithErrorHandling(vaultPda);
+  
   if (result.data) {
-    return result.data;
+    return result.data as UserVault;
   }
-  if (result.error?.code === 'ACCOUNT_NOT_FOUND') {
+  
+  // Handle account not found and initialization errors gracefully - return null instead of throwing
+  if (result.error?.code === 'ACCOUNT_NOT_FOUND' || 
+      (result.error?.message && result.error.message.includes('Program not initialized'))) {
     return null;
   }
+  
   throw new Error(result.error?.message || 'Failed to fetch user vault');
 };
 
@@ -69,6 +81,8 @@ export const useCdpStateWithSWR = () => {
       refreshInterval: 30000, // Refresh every 30 seconds
       revalidateOnFocus: true,
       revalidateOnReconnect: true,
+      errorRetryCount: 3,
+      errorRetryInterval: 2000,
       onError: (error) => {
         handleError(error);
       }
@@ -88,6 +102,8 @@ export const useCdpStateWithSWR = () => {
       refreshInterval: 15000, // Refresh every 15 seconds
       revalidateOnFocus: true,
       revalidateOnReconnect: true,
+      errorRetryCount: 3,
+      errorRetryInterval: 2000,
       onError: (error) => {
         handleError(error);
       }

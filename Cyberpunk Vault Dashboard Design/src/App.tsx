@@ -57,7 +57,7 @@ export default function App() {
   // TODO: Implement real API integration
   // CoinMarketCap API requires a backend proxy to avoid CORS issues
   // API endpoint: https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=SPYX
-  // API Key: 2fe22964-442d-4363-a056-2439e6455be2
+  // API Key: [REDACTED - Use environment variable in production]
   const fetchSpyxPrice = async () => {
     try {
       setPriceError(null);

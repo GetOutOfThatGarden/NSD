@@ -32,3 +32,7 @@ pub const MAX_VAULTS_PER_USER: u64 = 10;
 
 /// Default bump seed for PDA derivation
 pub const DEFAULT_BUMP: u8 = 255;
+
+/// Protocol admin public key (hardcoded for MVP security)
+/// In production, this should be a multisig or governance token
+pub const PROTOCOL_ADMIN: &str = "11111111111111111111111111111112"; // System program as placeholder

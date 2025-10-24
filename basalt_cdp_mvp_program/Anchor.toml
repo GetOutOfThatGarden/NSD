@@ -10,15 +10,15 @@ basalt_cdp_mvp = "8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3"
 [programs.testnet]
 basalt_cdp_mvp = "8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3"
 
-[programs.mainnet-beta]
+[programs.mainnet]
 basalt_cdp_mvp = "8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3"
 
 [registry]
 url = "https://anchor.projectserum.com"
 
 [provider]
-cluster = "devnet"
+cluster = "localnet"
 wallet = "/Users/user2/.config/solana/basalt.json"
 
 [scripts]
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+test = "yarn run ts-mocha -p ./tests/tsconfig.json -t 1000000 tests/**/*.ts"

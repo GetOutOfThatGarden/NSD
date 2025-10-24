@@ -734,9 +734,19 @@ export const calculateInterestSendAndConfirm = async (
 export const getProtocolConfig = (
     publicKey: web3.PublicKey,
     commitment?: web3.Commitment
-): Promise<IdlAccounts<BasaltCdpMvp>["protocolConfig"]> => _program.account.protocolConfig.fetch(publicKey, commitment);
+): Promise<IdlAccounts<BasaltCdpMvp>["protocolConfig"] | null> => {
+    if (!_program) {
+        throw new Error('Program not initialized. Call initializeClient first.');
+    }
+    return _program.account.protocolConfig.fetchNullable(publicKey, commitment);
+};
 
 export const getUserVault = (
     publicKey: web3.PublicKey,
     commitment?: web3.Commitment
-): Promise<IdlAccounts<BasaltCdpMvp>["userVault"]> => _program.account.userVault.fetch(publicKey, commitment);
+): Promise<IdlAccounts<BasaltCdpMvp>["userVault"] | null> => {
+    if (!_program) {
+        throw new Error('Program not initialized. Call initializeClient first.');
+    }
+    return _program.account.userVault.fetchNullable(publicKey, commitment);
+};

@@ -48,8 +48,8 @@ pub mod basalt_cdp_mvp {
     }
 
     /// Liquidate an undercollateralized vault
-    pub fn liquidate_vault(ctx: Context<LiquidateVault>, vault: Pubkey) -> Result<()> {
-        liquidate_vault::liquidate_vault(ctx, vault)
+    pub fn liquidate_vault(ctx: Context<LiquidateVault>, debt_to_liquidate: u64) -> Result<()> {
+        liquidate_vault::liquidate_vault(ctx, debt_to_liquidate)
     }
 
     /// Calculate and accrue interest on vaults

@@ -34,9 +34,6 @@ pub struct LiquidateVault<'info> {
     /// The user who owns the vault
     pub user: AccountInfo<'info>,
     
-    /// The user's collateral token account
-    pub user_collateral_account: Account<'info, TokenAccount>,
-    
     /// The protocol's collateral token account (pda)
     #[account(
         mut,
@@ -46,66 +43,108 @@ pub struct LiquidateVault<'info> {
     pub protocol_collateral_account: Account<'info, TokenAccount>,
     
     /// The liquidator's collateral token account
+    #[account(mut)]
     pub liquidator_collateral_account: Account<'info, TokenAccount>,
     
+    /// The liquidator's USD_RW token account (to burn USD_RW)
+    #[account(mut)]
+    pub liquidator_usdrw_account: Account<'info, TokenAccount>,
+    
     /// The protocol's USD_RW mint account
+    #[account(mut)]
     pub usdrw_mint: Account<'info, Mint>,
     
     /// The token program
     pub token_program: Program<'info, Token>,
 }
 
-pub fn liquidate_vault(ctx: Context<LiquidateVault>, _vault: Pubkey) -> Result<()> {
+pub fn liquidate_vault(ctx: Context<LiquidateVault>, debt_to_liquidate: u64) -> Result<()> {
     let user_vault = &mut ctx.accounts.user_vault;
     let protocol_config = &ctx.accounts.protocol_config;
     
-    // Validate that the vault is undercollateralized
+    // Validate that the vault has debt to liquidate
     if user_vault.debt_amount == 0 {
         return err!(CdpError::NoDebtToRedeem);
+    }
+    
+    // Validate that the liquidator is not the vault owner
+    if ctx.accounts.liquidator.key() == user_vault.owner {
+        return err!(CdpError::CannotLiquidateOwnVault);
+    }
+    
+    // Validate liquidation amount
+    if debt_to_liquidate == 0 || debt_to_liquidate > user_vault.debt_amount {
+        return err!(CdpError::ExceedsDebt);
     }
     
     // Calculate current collateral ratio
     // Collateral ratio = (collateral_amount * FIXED_POINT_SCALE) / debt_amount
     let collateral_ratio = if user_vault.debt_amount > 0 {
-        (user_vault.collateral_amount as u128 * FIXED_POINT_SCALE as u128) / user_vault.debt_amount as u128
+        user_vault.collateral_amount
+            .checked_mul(FIXED_POINT_SCALE)
+            .and_then(|result| result.checked_div(user_vault.debt_amount))
+            .ok_or(CdpError::InterestCalculationFailed)?
     } else {
-        u128::MAX
+        u64::MAX
     };
     
     // Check if vault is under the liquidation threshold
-    if collateral_ratio >= protocol_config.liquidation_threshold as u128 {
+    if collateral_ratio >= protocol_config.liquidation_threshold {
         return err!(CdpError::NotUndercollateralized);
     }
     
-    // Calculate liquidation amount (partial liquidation)
-    // For simplicity, we'll liquidate all debt
-    let liquidation_amount = user_vault.debt_amount;
+    // Calculate collateral to seize with liquidation bonus (10% bonus)
+    // collateral_to_seize = debt_to_liquidate * 1.1 (110% of debt value)
+    let liquidation_bonus = 110; // 110% = 10% bonus
+    let collateral_to_seize = debt_to_liquidate
+        .checked_mul(liquidation_bonus)
+        .and_then(|result| result.checked_div(100))
+        .ok_or(CdpError::InterestCalculationFailed)?;
+    
+    // Ensure we don't seize more collateral than available
+    let actual_collateral_to_seize = collateral_to_seize.min(user_vault.collateral_amount);
+    
+    // Validate that liquidator has enough USD_RW to burn
+    if ctx.accounts.liquidator_usdrw_account.amount < debt_to_liquidate {
+        return err!(CdpError::InsufficientCollateralForMint);
+    }
+    
+    // Update vault state BEFORE external calls
+    user_vault.debt_amount = user_vault.debt_amount.saturating_sub(debt_to_liquidate);
+    user_vault.collateral_amount = user_vault.collateral_amount.saturating_sub(actual_collateral_to_seize);
+    
+    // Create PDA seeds for protocol authority
+    let protocol_seeds = &[
+        b"protocol_config".as_ref(),
+        &[protocol_config.bump],
+    ];
+    let signer_seeds = &[&protocol_seeds[..]];
     
     // Transfer collateral from protocol to liquidator
-    let cpi_accounts = Transfer {
-        from: ctx.accounts.protocol_collateral_account.to_account_info(),
-        to: ctx.accounts.liquidator_collateral_account.to_account_info(),
-        authority: ctx.accounts.protocol_config.to_account_info(),
-    };
-    
-    let cpi_program = ctx.accounts.token_program.to_account_info();
-    let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-    anchor_spl::token::transfer(cpi_ctx, liquidation_amount)?;
-    
-    // Burn USD_RW from user
-    let burn_ctx = CpiContext::new(
+    let transfer_ctx = CpiContext::new_with_signer(
         ctx.accounts.token_program.to_account_info(),
-        anchor_spl::token::Burn {
-            mint: ctx.accounts.usdrw_mint.to_account_info(),
-            from: ctx.accounts.user_collateral_account.to_account_info(),
-            authority: ctx.accounts.user.to_account_info(),
+        Transfer {
+            from: ctx.accounts.protocol_collateral_account.to_account_info(),
+            to: ctx.accounts.liquidator_collateral_account.to_account_info(),
+            authority: protocol_config.to_account_info(),
         },
+        signer_seeds,
     );
     
-    anchor_spl::token::burn(burn_ctx, liquidation_amount)?;
+    anchor_spl::token::transfer(transfer_ctx, actual_collateral_to_seize)?;
     
-    // Update vault debt
-    user_vault.debt_amount = 0;
+    // Burn USD_RW from liquidator using protocol authority
+    let burn_ctx = CpiContext::new_with_signer(
+        ctx.accounts.token_program.to_account_info(),
+        Burn {
+            mint: ctx.accounts.usdrw_mint.to_account_info(),
+            from: ctx.accounts.liquidator_usdrw_account.to_account_info(),
+            authority: protocol_config.to_account_info(),
+        },
+        signer_seeds,
+    );
+    
+    anchor_spl::token::burn(burn_ctx, debt_to_liquidate)?;
     
     Ok(())
 }

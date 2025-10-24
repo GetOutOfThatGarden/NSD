@@ -50,6 +50,13 @@ export class SolanaErrorHandler {
       userMessage: 'The required account does not exist. You may need to initialize it first.',
     },
     {
+      pattern: /program not initialized/i,
+      code: 'PROGRAM_NOT_INITIALIZED',
+      message: 'Program client not initialized',
+      isRetryable: false,
+      userMessage: 'Please connect your wallet to initialize the program.',
+    },
+    {
       pattern: /blockhash not found/i,
       code: 'BLOCKHASH_NOT_FOUND',
       message: 'Transaction blockhash expired',
@@ -90,14 +97,14 @@ export class SolanaErrorHandler {
     console.error('Parsing Solana error:', error);
 
     // Handle AnchorError (program errors)
-    if (error instanceof AnchorError) {
+    if (error instanceof AnchorError && error.error?.errorCode?.number !== undefined) {
       const errorCode = error.error.errorCode.number;
-      const errorMessage = this.ANCHOR_ERROR_CODES[errorCode] || error.error.errorMessage;
+      const errorMessage = this.ANCHOR_ERROR_CODES[errorCode] || error.error.errorMessage || 'Unknown anchor error';
       
       return {
         code: `ANCHOR_${errorCode}`,
         message: errorMessage,
-        details: error.error.errorMessage,
+        details: error.error.errorMessage || error.message,
         isRetryable: false,
         userMessage: this.getAnchorErrorUserMessage(errorCode, errorMessage),
       };

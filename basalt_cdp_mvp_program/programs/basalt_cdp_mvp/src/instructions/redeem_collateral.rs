@@ -31,6 +31,7 @@ pub struct RedeemCollateral<'info> {
     pub user_vault: Account<'info, UserVault>,
     
     /// The user's collateral token account
+    #[account(mut)]
     pub user_collateral_account: Account<'info, TokenAccount>,
     
     /// The protocol's collateral token account (pda)
@@ -42,54 +43,81 @@ pub struct RedeemCollateral<'info> {
     pub protocol_collateral_account: Account<'info, TokenAccount>,
     
     /// The user's USD_RW token account
+    #[account(mut)]
     pub user_usdrw_account: Account<'info, TokenAccount>,
     
     /// The protocol's USD_RW mint account
+    #[account(mut)]
     pub usdrw_mint: Account<'info, Mint>,
     
     /// The token program
     pub token_program: Program<'info, Token>,
 }
 
-pub fn redeem_collateral(ctx: Context<RedeemCollateral>, amount: u64) -> Result<()> {
+pub fn redeem_collateral(ctx: Context<RedeemCollateral>, usdrw_amount: u64) -> Result<()> {
     let user_vault = &mut ctx.accounts.user_vault;
-    let _protocol_config = &ctx.accounts.protocol_config;
+    let protocol_config = &ctx.accounts.protocol_config;
     
     // Validate that the user has debt to redeem
     if user_vault.debt_amount == 0 {
         return err!(CdpError::NoDebtToRedeem);
     }
     
-    // Validate that the amount is not greater than debt
-    if amount > user_vault.debt_amount {
+    // Validate that the USD_RW amount is not greater than debt
+    if usdrw_amount > user_vault.debt_amount {
         return err!(CdpError::ExceedsDebt);
     }
     
-    // Update vault debt
-    user_vault.debt_amount = user_vault.debt_amount.saturating_sub(amount);
+    // Validate that the user has enough USD_RW tokens
+    if ctx.accounts.user_usdrw_account.amount < usdrw_amount {
+        return err!(CdpError::InsufficientCollateralForMint);
+    }
     
-    // Transfer collateral from protocol to user
-    let cpi_accounts = Transfer {
-        from: ctx.accounts.protocol_collateral_account.to_account_info(),
-        to: ctx.accounts.user_collateral_account.to_account_info(),
-        authority: ctx.accounts.protocol_config.to_account_info(),
-    };
+    // Calculate collateral to return (1:1 ratio for simplicity in MVP)
+    // In a real system, this would use oracle prices
+    let collateral_to_return = usdrw_amount;
     
-    let cpi_program = ctx.accounts.token_program.to_account_info();
-    let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-    anchor_spl::token::transfer(cpi_ctx, amount)?;
+    // Validate that the vault has enough collateral
+    if user_vault.collateral_amount < collateral_to_return {
+        return err!(CdpError::NoCollateralToLiquidate);
+    }
     
-    // Burn USD_RW from user
-    let burn_ctx = CpiContext::new(
+    // Update vault state BEFORE external calls
+    user_vault.debt_amount = user_vault.debt_amount.saturating_sub(usdrw_amount);
+    user_vault.collateral_amount = user_vault.collateral_amount.saturating_sub(collateral_to_return);
+    
+    // Create PDA seeds for protocol authority
+    let protocol_seeds = &[
+        b"protocol_config".as_ref(),
+        &[protocol_config.bump],
+    ];
+    let signer_seeds = &[&protocol_seeds[..]];
+    
+    // Burn USD_RW from user using protocol authority
+    let burn_ctx = CpiContext::new_with_signer(
         ctx.accounts.token_program.to_account_info(),
         anchor_spl::token::Burn {
             mint: ctx.accounts.usdrw_mint.to_account_info(),
             from: ctx.accounts.user_usdrw_account.to_account_info(),
-            authority: ctx.accounts.user.to_account_info(),
+            authority: protocol_config.to_account_info(),
         },
+        signer_seeds,
     );
     
-    anchor_spl::token::burn(burn_ctx, amount)?;
+    anchor_spl::token::burn(burn_ctx, usdrw_amount)?;
+    
+    // Transfer collateral from protocol to user
+    let transfer_ctx = CpiContext::new_with_signer(
+        ctx.accounts.token_program.to_account_info(),
+        Transfer {
+            from: ctx.accounts.protocol_collateral_account.to_account_info(),
+            to: ctx.accounts.user_collateral_account.to_account_info(),
+            authority: protocol_config.to_account_info(),
+        },
+        signer_seeds,
+    );
+    
+    anchor_spl::token::transfer(transfer_ctx, collateral_to_return)?;
     
     Ok(())
 }
