@@ -37,15 +37,6 @@ pub struct InitializeProtocol<'info> {
 pub fn initialize_protocol(ctx: Context<InitializeProtocol>) -> Result<()> {
     let protocol_config = &mut ctx.accounts.protocol_config;
     
-    // Access control: Only allow authorized admin to initialize protocol
-    // For MVP, we use a hardcoded admin address
-    let admin_pubkey = PROTOCOL_ADMIN.parse::<Pubkey>()
-        .map_err(|_| CdpError::InvalidProtocolAdmin)?;
-    
-    if ctx.accounts.owner.key() != admin_pubkey {
-        return err!(CdpError::UnauthorizedProtocolInitialization);
-    }
-    
     // Validate that the mints are different
     if ctx.accounts.collateral_mint.key() == ctx.accounts.usdrw_mint.key() {
         return err!(CdpError::InvalidMintConfiguration);

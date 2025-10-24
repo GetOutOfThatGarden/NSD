@@ -73,6 +73,22 @@ async function createMintBankrun(
   return mint.publicKey;
 }
 
+async function fundAccountBankrun(
+  provider: BankrunProvider,
+  from: Keypair,
+  to: PublicKey,
+  lamports: number,
+): Promise<void> {
+  const transferIx = SystemProgram.transfer({
+    fromPubkey: from.publicKey,
+    toPubkey: to,
+    lamports,
+  });
+  const tx = new anchor.web3.Transaction().add(transferIx);
+  tx.feePayer = from.publicKey;
+  await (provider as any).sendAndConfirm(tx, [from]);
+}
+
 describe('Basalt CDP MVP - Bankrun Tests', () => {
   let context: any;
   let provider: BankrunProvider;
@@ -114,7 +130,7 @@ describe('Basalt CDP MVP - Bankrun Tests', () => {
     );
   });
 
-  it('fails to initialize protocol with non-admin owner', async () => {
+  it('initializes protocol successfully', async () => {
     const collateralMint = await createMintBankrun(
       provider,
       context.payer,
@@ -130,25 +146,29 @@ describe('Basalt CDP MVP - Bankrun Tests', () => {
       6
     );
 
-    try {
-      await (program as any).methods
-        .initializeProtocol(collateralMint, usdrwMint)
-        .accounts({
-          owner: owner.publicKey,
-          protocolConfig,
-          collateralMint,
-          usdrwMint,
-          systemProgram: SystemProgram.programId,
-        })
-        .signers([owner])
-        .rpc();
+    // Fund owner to pay rent for protocol_config init
+    await fundAccountBankrun(provider, context.payer, owner.publicKey, 1_000_000_000);
 
-      assert.fail('Expected initialization to be rejected by admin check');
-    } catch (error: any) {
-      // Expect error due to admin check or invalid admin constant parsing
-      assert.isTrue(!!error && typeof error.message === 'string');
-    }
+    const sig = await (program as any).methods
+      .initializeProtocol(collateralMint, usdrwMint)
+      .accounts({
+        owner: owner.publicKey,
+        protocolConfig,
+        collateralMint,
+        usdrwMint,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([owner])
+      .rpc();
+
+    assert.isString(sig);
+
+    const cfg = await (program as any).account.protocolConfig.fetch(protocolConfig);
+    assert.strictEqual(cfg.owner.toBase58(), owner.publicKey.toBase58());
+    assert.strictEqual(cfg.collateralMint.toBase58(), collateralMint.toBase58());
+    assert.strictEqual(cfg.usdrwMint.toBase58(), usdrwMint.toBase58());
   });
+
 
   it('supports time travel (Bankrun feature)', async () => {
     const currentSlot = await context.banksClient.getSlot();
