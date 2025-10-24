@@ -1,7 +1,16 @@
 [toolchain]
 anchor_version = "0.31.1"
 
+[programs.localnet]
+basalt_cdp_mvp = "8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3"
+
 [programs.devnet]
+basalt_cdp_mvp = "8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3"
+
+[programs.testnet]
+basalt_cdp_mvp = "8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3"
+
+[programs.mainnet-beta]
 basalt_cdp_mvp = "8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3"
 
 [registry]

@@ -1,13 +1,14 @@
 import { Connection, PublicKey } from '@solana/web3.js';
-import { Program, AnchorProvider, web3 } from '@coral-xyz/anchor';
-import { BasaltCdpMvp } from '../target/types/basalt_cdp_mvp';
+import { Program, AnchorProvider } from '@coral-xyz/anchor';
+import { createSolanaConnection, defaultConnection } from '../connection';
+import { SOLANA_CONFIG } from '../config';
 
 export const PROGRAM_ID = new PublicKey('8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3');
 
 export const getProgram = (
   connection: Connection = defaultConnection, 
   wallet: any
-): Program<BasaltCdpMvp> => {
+): Program<any> => {
   const provider = new AnchorProvider(
     connection, 
     wallet, 
@@ -17,9 +18,8 @@ export const getProgram = (
       preflightCommitment: SOLANA_CONFIG.commitment,
     }
   );
-  const program = new Program<BasaltCdpMvp>(
+  const program = new Program<any>(
     IDL,
-    PROGRAM_ID,
     provider
   );
   return program;
@@ -30,9 +30,9 @@ export const getProgram = (
  * Useful for testing or connecting to different clusters
  */
 export const createProgram = (
-  cluster: 'devnet' | 'testnet' | 'mainnet-beta' | 'localhost',
+  cluster: 'devnet' | 'testnet' | 'mainnet-beta' | 'localnet',
   wallet: any
-): Program<BasaltCdpMvp> => {
+): Program<any> => {
   const connection = createSolanaConnection(cluster);
   return getProgram(connection, wallet);
 };

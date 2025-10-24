@@ -5,7 +5,7 @@ export const CLUSTER_ENDPOINTS = {
   'mainnet-beta': 'https://api.mainnet-beta.solana.com',
   'devnet': 'https://api.devnet.solana.com',
   'testnet': 'https://api.testnet.solana.com',
-  'localhost': 'http://localhost:8899'
+  'localnet': 'http://localhost:8899'
 } as const;
 
 export type ClusterType = keyof typeof CLUSTER_ENDPOINTS;
@@ -34,7 +34,7 @@ export const createSolanaConnection = (
  * Get the current cluster from environment or default to devnet
  */
 export const getCurrentCluster = (): ClusterType => {
-  const envCluster = process.env.REACT_APP_SOLANA_CLUSTER as ClusterType;
+  const envCluster = import.meta.env.VITE_SOLANA_CLUSTER as ClusterType;
   return envCluster && envCluster in CLUSTER_ENDPOINTS ? envCluster : DEFAULT_CLUSTER;
 };
 
@@ -47,8 +47,8 @@ export const defaultConnection = createSolanaConnection(getCurrentCluster());
  * Helper to get cluster URL using Solana's built-in helper for standard clusters
  */
 export const getClusterUrl = (cluster: ClusterType): string => {
-  if (cluster === 'localhost') {
-    return CLUSTER_ENDPOINTS.localhost;
+  if (cluster === 'localnet') {
+    return CLUSTER_ENDPOINTS.localnet;
   }
   return clusterApiUrl(cluster);
 };

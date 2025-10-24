@@ -11,6 +11,17 @@ pub mod error;
 use anchor_lang::prelude::*;
 use instructions::*;
 
+// Environment-specific program IDs using Cargo features
+#[cfg(all(feature = "localnet", not(any(feature = "devnet", feature = "testnet", feature = "mainnet-beta"))))]
+declare_id!("8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3");
+
+#[cfg(feature = "devnet")]
+declare_id!("8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3");
+
+#[cfg(feature = "testnet")]
+declare_id!("8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3");
+
+#[cfg(feature = "mainnet-beta")]
 declare_id!("8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3");
 
 #[program]

@@ -10,6 +10,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useCdpActions } from './solana/useCdpActions';
 import { useCdpState } from './solana/useCdpState';
+import { SWRProvider } from './providers/SWRProvider';
 
 type Scenario = 'baseline' | 'scenario1' | 'scenario2' | 'scenario3';
 
@@ -42,7 +43,7 @@ const scenarios: Record<Scenario, ScenarioData> = {
   },
 };
 
-export default function App() {
+function AppContent() {
   // Solana wallet and CDP integration
   const { connected, publicKey } = useWallet();
   const cdpActions = useCdpActions();
@@ -625,5 +626,13 @@ export default function App() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <SWRProvider>
+      <AppContent />
+    </SWRProvider>
   );
 }
