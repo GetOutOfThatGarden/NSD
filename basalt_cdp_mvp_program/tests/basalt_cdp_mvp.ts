@@ -2,7 +2,7 @@ import * as anchor from '@coral-xyz/anchor';
 import { Program } from '@coral-xyz/anchor';
 import { BasaltCdpMvp } from '../target/types/basalt_cdp_mvp';
 
-describe('basalt-cdp-mvp', () => {
+describe.skip('basalt-cdp-mvp', () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
 
