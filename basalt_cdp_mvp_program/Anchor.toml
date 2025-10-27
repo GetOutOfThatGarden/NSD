@@ -17,7 +17,7 @@ basalt_cdp_mvp = "8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3"
 url = "https://anchor.projectserum.com"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "/Users/user2/.config/solana/basalt.json"
 
 [scripts]

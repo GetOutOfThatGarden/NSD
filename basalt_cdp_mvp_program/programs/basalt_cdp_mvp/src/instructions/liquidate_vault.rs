@@ -32,6 +32,9 @@ pub struct LiquidateVault<'info> {
     pub user_vault: Account<'info, UserVault>,
     
     /// The user who owns the vault
+    /// CHECK: `user` is only used to derive PDA seeds and compare pubkeys.
+    /// No lamports or account data are read or written, and no CPI is executed
+    /// against this account. Using `AccountInfo` avoids unnecessary deserialization.
     pub user: AccountInfo<'info>,
     
     /// The protocol's collateral token account (pda)

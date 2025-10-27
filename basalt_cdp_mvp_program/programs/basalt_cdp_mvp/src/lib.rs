@@ -56,4 +56,11 @@ pub mod basalt_cdp_mvp {
     pub fn calculate_interest(ctx: Context<CalculateInterest>) -> Result<()> {
         calculate_interest::calculate_interest(ctx)
     }
+
+    /// Initialize the protocol collateral vault token account (PDA)
+    pub fn initialize_collateral_vault(
+        ctx: Context<InitializeCollateralVault>,
+    ) -> Result<()> {
+        initialize_collateral_vault::initialize_collateral_vault(ctx)
+    }
 }

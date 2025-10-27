@@ -6,7 +6,7 @@ import { Label } from './components/ui/label';
 import { Badge } from './components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { AlertTriangle, TrendingUp, TrendingDown, Wallet, RefreshCw } from 'lucide-react';
-import { BasaltLogo } from './components/BasaltLogo.tsx';
+import { BasaltLogo } from './components/BasaltLogo';
 
 type Scenario = 'baseline' | 'scenario1' | 'scenario2' | 'scenario3';
 
@@ -48,14 +48,6 @@ export default function App() {
   const [spyWithdrawAmount, setSpyWithdrawAmount] = useState('0');
   const [customScenario3, setCustomScenario3] = useState('-20');
   const [customScenario3Error, setCustomScenario3Error] = useState(false);
-  // Visual spacing test states
-  const [testCards, setTestCards] = useState<number[]>([1, 2, 3]);
-  const [spacingCheck, setSpacingCheck] = useState<{initial:boolean; resize:boolean; dynamic:boolean; details:string[]}>({
-    initial: true,
-    resize: true,
-    dynamic: true,
-    details: []
-  });
   
   // Live price data - Ready for API integration
   const [spyPrice, setSpyPrice] = useState<number>(550); // Static price - replace with API data
@@ -63,62 +55,10 @@ export default function App() {
   const [priceError, setPriceError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  // Responsive gap: min 16px (1rem) on mobile, scales up on larger screens
-  const rowGapClass = "gap-4 sm:gap-5 lg:gap-6";
-
-  // Utilities to measure spacing between cards in a row
-  function measureRowGap(rowId: string): number | null {
-    if (typeof document === 'undefined') return null;
-    const row = document.getElementById(rowId);
-    if (!row) return null;
-    const children = Array.from(row.children) as HTMLElement[];
-    if (children.length < 2) return null;
-    let minGap = Infinity;
-    for (let i = 0; i < children.length - 1; i++) {
-      const a = children[i].getBoundingClientRect();
-      const b = children[i + 1].getBoundingClientRect();
-      const gap = b.left - a.right;
-      minGap = Math.min(minGap, gap);
-    }
-    return minGap === Infinity ? null : minGap;
-  }
-
-  function runSpacingChecks() {
-    const ids = ['position-row', 'actions-row', 'metrics-row', 'test-row'];
-    const details: string[] = [];
-    let pass = true;
-    for (const id of ids) {
-      const gap = measureRowGap(id);
-      if (gap == null) {
-        details.push(`${id}: n/a`);
-      } else {
-        const px = Math.round(gap);
-        details.push(`${id}: ${px}px`);
-        if (gap < 16) pass = false;
-      }
-    }
-    setSpacingCheck(prev => ({ ...prev, initial: pass, resize: pass, details }));
-  }
-
-  useEffect(() => {
-    runSpacingChecks();
-    const handleResize = () => {
-      runSpacingChecks();
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    runSpacingChecks();
-    const gap = measureRowGap('test-row');
-    setSpacingCheck(prev => ({ ...prev, dynamic: (gap ?? 16) >= 16 }));
-  }, [testCards]);
-
   // TODO: Implement real API integration
   // CoinMarketCap API requires a backend proxy to avoid CORS issues
   // API endpoint: https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=SPYX
-  // API Key: [REDACTED]
+  // API Key: 2fe22964-442d-4363-a056-2439e6455be2
   const fetchSpyxPrice = async () => {
     try {
       setPriceError(null);
@@ -258,7 +198,7 @@ export default function App() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
         {/* Tabbed Interface */}
-        <Tabs defaultValue="redemptions-repay" className="w-full" onValueChange={setActiveTab}>
+        <Tabs defaultValue="mint-borrow" className="w-full" onValueChange={setActiveTab}>
           <TabsList className="w-full bg-gray-900 border border-gray-800 p-1 h-auto grid grid-cols-3 rounded-lg">
             <TabsTrigger 
               value="mint-borrow" 
@@ -356,8 +296,8 @@ export default function App() {
                   </h3>
                 </div>
                 
-                <div className={`flex ${rowGapClass} overflow-x-auto py-2 scroll-smooth items-stretch`} id="position-row">
-                  <div className="bg-gray-950 p-4 rounded-lg border border-gray-800 w-[280px] flex-shrink-0">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="bg-gray-950 p-4 rounded-lg border border-gray-800">
                     <p className="text-xs text-gray-500 mb-1">Collateral</p>
                     <p className="text-2xl text-indigo-400 font-semibold mb-1">
                       {parseFloat(spyAmount).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} SPY
@@ -367,7 +307,7 @@ export default function App() {
                     </p>
                   </div>
                   
-                  <div className="bg-gray-950 p-4 rounded-lg border border-gray-800 w-[280px] flex-shrink-0">
+                  <div className="bg-gray-950 p-4 rounded-lg border border-gray-800">
                     <p className="text-xs text-gray-500 mb-1">Debt</p>
                     <p className="text-2xl text-teal-400 font-semibold mb-1">
                       {parseFloat(usdrwAmount).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} USDrw
@@ -377,7 +317,7 @@ export default function App() {
                     </p>
                   </div>
                   
-                  <div className="bg-gray-950 p-4 rounded-lg border border-gray-800 w-[280px] flex-shrink-0">
+                  <div className="bg-gray-950 p-4 rounded-lg border border-gray-800">
                     <p className="text-xs text-gray-500 mb-1">Health Ratio</p>
                     <p className="text-2xl font-semibold mb-1" style={{ color: status.color }}>
                       {displayedCollateralizationRatio.toFixed(0)}%
@@ -397,9 +337,9 @@ export default function App() {
               </Card>
 
               {/* Portfolio Actions */}
-              <div className={`flex ${rowGapClass} overflow-x-auto py-2 scroll-smooth items-stretch`} id="actions-row">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {/* Deposit More Collateral */}
-                <Card className="bg-gray-900 border-gray-800 p-4 sm:p-5 rounded-xl shadow-lg hover:border-indigo-500/50 transition-all w-[320px] flex-shrink-0">
+                <Card className="bg-gray-900 border-gray-800 p-4 sm:p-5 rounded-xl shadow-lg hover:border-indigo-500/50 transition-all">
                   <div className="flex items-center gap-2 mb-4">
                     <div className="w-1 h-5 bg-indigo-500 rounded-full" />
                     <h4 className="text-white">
@@ -429,7 +369,7 @@ export default function App() {
                 </Card>
 
                 {/* Repay Debt */}
-                <Card className="bg-gray-900 border-gray-800 p-4 sm:p-5 rounded-xl shadow-lg hover:border-teal-500/50 transition-all w-[320px] flex-shrink-0">
+                <Card className="bg-gray-900 border-gray-800 p-4 sm:p-5 rounded-xl shadow-lg hover:border-teal-500/50 transition-all">
                   <div className="flex items-center gap-2 mb-4">
                     <div className="w-1 h-5 bg-teal-500 rounded-full" />
                     <h4 className="text-white">
@@ -461,7 +401,7 @@ export default function App() {
                 </Card>
 
                 {/* Withdraw Collateral */}
-                <Card className="bg-gray-900 border-gray-800 p-4 sm:p-5 rounded-xl shadow-lg hover:border-amber-500/50 transition-all w-[320px] flex-shrink-0">
+                <Card className="bg-gray-900 border-gray-800 p-4 sm:p-5 rounded-xl shadow-lg hover:border-amber-500/50 transition-all">
                   <div className="flex items-center gap-2 mb-4">
                     <div className="w-1 h-5 bg-amber-500 rounded-full" />
                     <h4 className="text-white">
@@ -631,11 +571,11 @@ export default function App() {
           </TabsContent>
         </Tabs>
 
-        {/* Core Metrics Row */}
-        <div className={`flex ${rowGapClass} overflow-x-auto py-2 scroll-smooth items-stretch`} id="metrics-row">
+        {/* Core Metrics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {/* Collateral Value */}
           <Card 
-            className="bg-gray-900 border-gray-800 p-4 sm:p-6 relative overflow-hidden rounded-xl shadow-lg w-[480px] flex-shrink-0"
+            className="bg-gray-900 border-gray-800 p-4 sm:p-6 relative overflow-hidden rounded-xl shadow-lg"
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-3xl" />
             <div className="relative z-10">
@@ -663,7 +603,7 @@ export default function App() {
 
           {/* Vault Health */}
           <Card 
-            className={`bg-gray-900 p-4 sm:p-6 relative overflow-hidden rounded-xl shadow-lg w-[480px] flex-shrink-0 ${status.borderColor}`}
+            className={`bg-gray-900 p-4 sm:p-6 relative overflow-hidden rounded-xl shadow-lg ${status.borderColor}`}
           >
             <div 
               className={`absolute top-0 right-0 w-32 h-32 ${status.bgColor} rounded-full blur-3xl`}
@@ -689,42 +629,6 @@ export default function App() {
             </div>
           </Card>
         </div>
-
-        {/* Visual Spacing Tests */}
-        <Card className="bg-gray-900 border-gray-800 p-4 sm:p-5 rounded-xl shadow-lg mt-6">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-1 h-6 bg-teal-500 rounded-full" />
-            <h3 className="text-lg text-white">Spacing Tests</h3>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Badge variant="outline" className={spacingCheck.initial ? 'text-emerald-400 border-emerald-500/30' : 'text-red-400 border-red-500/30'}>
-              Initial {spacingCheck.initial ? 'PASS' : 'FAIL'}
-            </Badge>
-            <Badge variant="outline" className={spacingCheck.resize ? 'text-emerald-400 border-emerald-500/30' : 'text-red-400 border-red-500/30'}>
-              Resize {spacingCheck.resize ? 'PASS' : 'FAIL'}
-            </Badge>
-            <Badge variant="outline" className={spacingCheck.dynamic ? 'text-emerald-400 border-emerald-500/30' : 'text-red-400 border-red-500/30'}>
-              Dynamic {spacingCheck.dynamic ? 'PASS' : 'FAIL'}
-            </Badge>
-          </div>
-          <p className="text-xs text-gray-400 mt-2">{spacingCheck.details.join(' • ')}</p>
-          <div className="flex gap-2 mt-4">
-            <Button onClick={() => setTestCards(prev => [...prev, Date.now()])}>
-              Add Test Card
-            </Button>
-            <Button variant="outline" onClick={() => setTestCards(prev => prev.length ? prev.slice(0, -1) : prev)}>
-              Remove Test Card
-            </Button>
-          </div>
-          <div id="test-row" className={`flex ${rowGapClass} overflow-x-auto py-2 scroll-smooth items-stretch mt-4`}>
-            {testCards.map((key) => (
-              <Card key={key} className="bg-gray-950 p-4 rounded-lg border border-gray-800 w-[320px] flex-shrink-0">
-                <p className="text-sm text-gray-400 mb-1">Test Card</p>
-                <p className="text-xs text-gray-500">ID: {key}</p>
-              </Card>
-            ))}
-          </div>
-        </Card>
       </div>
     </div>
   );

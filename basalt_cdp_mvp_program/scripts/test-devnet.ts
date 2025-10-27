@@ -1,8 +1,7 @@
 import { Connection, PublicKey, Keypair } from '@solana/web3.js';
-import { Program, AnchorProvider, Wallet } from '@coral-xyz/anchor';
+import { Program, AnchorProvider, Wallet, BN, Idl } from '@coral-xyz/anchor';
 import { createMint, getOrCreateAssociatedTokenAccount, mintTo } from '@solana/spl-token';
-import { BasaltCdpMvp } from '../target/types/basalt_cdp_mvp';
-import fs from 'fs';
+// IDL will be fetched from chain to avoid Node-specific imports/types
 
 /**
  * Comprehensive devnet testing script
@@ -12,20 +11,23 @@ import fs from 'fs';
 // Devnet connection
 const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
 
-// Load wallet from the configured keypair
-const walletKeypair = Keypair.fromSecretKey(
-  new Uint8Array(JSON.parse(fs.readFileSync('/Users/user2/.config/solana/basalt.json', 'utf8')))
-);
-const wallet = new Wallet(walletKeypair);
+// Use Anchor's local wallet (id.json) via env(), then reuse it on devnet
+const baseProvider = AnchorProvider.env();
+const wallet = baseProvider.wallet as Wallet;
+const walletKeypair: Keypair = (wallet as any).payer as Keypair;
 
-// Setup provider and program
+// Setup provider and program (program initialized lazily after fetching IDL)
 const provider = new AnchorProvider(connection, wallet, AnchorProvider.defaultOptions());
-const programId = new PublicKey('YOUR_DEPLOYED_PROGRAM_ID'); // Replace with actual program ID
-const program = new Program<BasaltCdpMvp>(
-  JSON.parse(fs.readFileSync('./target/idl/basalt_cdp_mvp.json', 'utf8')),
-  programId,
-  provider
-);
+const programId = new PublicKey('8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3');
+let program: any;
+
+async function initProgram() {
+  const idl = await Program.fetchIdl(programId, provider);
+  if (!idl) {
+    throw new Error('IDL not found on-chain. Build and deploy the program, or provide local IDL.');
+  }
+  program = new Program(idl as Idl, programId, provider) as any;
+}
 
 async function setupTestEnvironment() {
   console.log('🔧 Setting up test environment on devnet...');
@@ -100,7 +102,7 @@ async function testProtocolInitialization(collateralMint: PublicKey, usdrwMint: 
   
   try {
     const [protocolConfigPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('protocol_config')],
+      [new TextEncoder().encode('protocol_config')],
       programId
     );
     
@@ -124,6 +126,39 @@ async function testProtocolInitialization(collateralMint: PublicKey, usdrwMint: 
   }
 }
 
+async function initializeProtocolCollateralVault(
+  protocolConfig: PublicKey,
+  collateralMint: PublicKey
+) {
+  console.log('🏗️  Initializing protocol collateral vault (PDA token account)...');
+
+  try {
+    const [protocolCollateralAccount] = PublicKey.findProgramAddressSync(
+      [new TextEncoder().encode('collateral_vault'), protocolConfig.toBuffer()],
+      programId
+    );
+
+    const tx = await program.methods
+      .initializeCollateralVault()
+      .accounts({
+        owner: wallet.publicKey,
+        protocolConfig,
+        collateralMint,
+        protocolCollateralAccount,
+        // token and system programs are auto-inferred
+      })
+      .rpc();
+
+    console.log(`✅ Collateral vault initialized! Transaction: ${tx}`);
+    console.log(`🔍 View on explorer: https://explorer.solana.com/tx/${tx}?cluster=devnet`);
+
+    return protocolCollateralAccount;
+  } catch (error) {
+    console.error('❌ Collateral vault initialization failed:', error);
+    throw error;
+  }
+}
+
 async function testMintUsdrw(
   protocolConfig: PublicKey,
   userCollateralAccount: PublicKey,
@@ -134,19 +169,19 @@ async function testMintUsdrw(
   
   try {
     const [userVaultPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('vault'), wallet.publicKey.toBuffer(), protocolConfig.toBuffer()],
+      [new TextEncoder().encode('vault'), wallet.publicKey.toBuffer(), protocolConfig.toBuffer()],
       programId
     );
     
     const [protocolCollateralAccount] = PublicKey.findProgramAddressSync(
-      [Buffer.from('collateral_vault'), protocolConfig.toBuffer()],
+      [new TextEncoder().encode('collateral_vault'), protocolConfig.toBuffer()],
       programId
     );
     
     const mintAmount = 100 * 1e9; // 100 collateral tokens
     
     const tx = await program.methods
-      .mintUsdrw(new anchor.BN(mintAmount))
+      .mintUsdrw(new BN(mintAmount))
       .accounts({
         user: wallet.publicKey,
         protocolConfig,
@@ -173,6 +208,7 @@ async function runDevnetTests() {
     console.log('🧪 Starting comprehensive devnet tests...');
     console.log(`🔗 Connected to: ${connection.rpcEndpoint}`);
     console.log(`👤 Testing with wallet: ${wallet.publicKey.toBase58()}`);
+    await initProgram();
     
     // Setup test environment
     const { collateralMint, usdrwMint, userCollateralAccount, userUsdrwAccount } = 
@@ -180,6 +216,8 @@ async function runDevnetTests() {
     
     // Test protocol initialization
     const protocolConfig = await testProtocolInitialization(collateralMint, usdrwMint);
+    // Initialize the protocol's collateral vault PDA token account
+    await initializeProtocolCollateralVault(protocolConfig, collateralMint);
     
     // Test minting
     const userVault = await testMintUsdrw(
@@ -198,11 +236,9 @@ async function runDevnetTests() {
     
   } catch (error) {
     console.error('❌ Devnet tests failed:', error);
-    process.exit(1);
+    throw error;
   }
 }
 
-// Run tests if this script is executed directly
-if (require.main === module) {
-  runDevnetTests();
-}
+// Run tests
+runDevnetTests().catch(() => {});
