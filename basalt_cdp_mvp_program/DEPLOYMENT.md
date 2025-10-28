@@ -13,9 +13,15 @@ All security and configuration checks have been completed:
 ## Current Configuration
 
 ### Program Information
-- **Program ID**: `8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3`
+- **Program ID**: `5gzoSxVDDSjdE3pPYu9GuyaDAyV2uBXm34BvWa5epsv3`
 - **Network**: Solana Devnet
 - **Wallet**: Uses `~/.config/solana/id.json` (or `$SOLANA_WALLET` if set)
+
+### Token Configuration
+- **SPYx Mock Collateral Mint**: `B5o7is4JQ4azcoNA9U9oN5wQ4DuQmdwLviwudFtiLuZ9`
+- **USD_RW Stablecoin Mint**: To be deployed
+- **Collateral Decimals**: 9
+- **USD_RW Decimals**: 6
 
 ### Updated Files
 - `Anchor.toml`: Wallet path made portable
@@ -45,8 +51,8 @@ export SOLANA_WALLET=~/.config/solana/id.json
 
 ### 3. Verify Deployment
 After deployment, verify using:
-- **Solana Explorer**: https://explorer.solana.com/address/8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3?cluster=devnet
-- **SolanaFM**: https://solana.fm/address/8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3?cluster=devnet-alpha
+- **Solana Explorer**: https://explorer.solana.com/address/5gzoSxVDDSjdE3pPYu9GuyaDAyV2uBXm34BvWa5epsv3?cluster=devnet
+- **SolanaFM**: https://solana.fm/address/5gzoSxVDDSjdE3pPYu9GuyaDAyV2uBXm34BvWa5epsv3?cluster=devnet-alpha
 
 ## Post-Deployment Tasks
 
@@ -94,7 +100,7 @@ solana airdrop 2
 ## Explorer Links
 
 Once deployed, monitor your program at:
-- **Program Account**: https://explorer.solana.com/address/8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3?cluster=devnet
+- **Program Account**: https://explorer.solana.com/address/5gzoSxVDDSjdE3pPYu9GuyaDAyV2uBXm34BvWa5epsv3?cluster=devnet
 - **Transactions**: Filter by program ID to see all interactions
 
 ## Troubleshooting

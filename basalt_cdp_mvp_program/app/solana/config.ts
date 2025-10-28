@@ -6,13 +6,14 @@ export const RPC_URL: string = import.meta.env.VITE_RPC_URL || "https://api.devn
 
 // Program ID from Anchor-generated types (target/types/basalt_cdp_mvp.ts)
 export const PROGRAM_ID = new PublicKey(
-  import.meta.env.VITE_PROGRAM_ID || "8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3"
+  import.meta.env.VITE_PROGRAM_ID || "5gzoSxVDDSjdE3pPYu9GuyaDAyV2uBXm34BvWa5epsv3"
 );
 
 // Collateral and USD_RW mint addresses: MUST be provided via env for real use
 export const COLLATERAL_MINT = (() => {
   const v = import.meta.env.VITE_COLLATERAL_MINT as string | undefined;
-  return v ? new PublicKey(v) : null;
+  // Default to SPYx mock mint address for devnet testing
+  return v ? new PublicKey(v) : new PublicKey("B5o7is4JQ4azcoNA9U9oN5wQ4DuQmdwLviwudFtiLuZ9");
 })();
 
 export const USDRW_MINT = (() => {

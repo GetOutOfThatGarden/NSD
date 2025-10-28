@@ -15,10 +15,10 @@ export interface SolanaConfig {
  * Replace these with your actual deployed program IDs
  */
 const PROGRAM_IDS: Record<ClusterType, string> = {
-  'localhost': '8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3',
-  'devnet': '8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3',
-  'testnet': '8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3',
-  'mainnet-beta': '8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3'
+  'localhost': '5gzoSxVDDSjdE3pPYu9GuyaDAyV2uBXm34BvWa5epsv3',
+  'devnet': '5gzoSxVDDSjdE3pPYu9GuyaDAyV2uBXm34BvWa5epsv3',
+  'testnet': '5gzoSxVDDSjdE3pPYu9GuyaDAyV2uBXm34BvWa5epsv3',
+  'mainnet-beta': '5gzoSxVDDSjdE3pPYu9GuyaDAyV2uBXm34BvWa5epsv3'
 };
 
 /**

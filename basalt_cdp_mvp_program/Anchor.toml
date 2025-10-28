@@ -2,16 +2,16 @@
 anchor_version = "0.31.1"
 
 [programs.localnet]
-basalt_cdp_mvp = "8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3"
+basalt_cdp_mvp = "5gzoSxVDDSjdE3pPYu9GuyaDAyV2uBXm34BvWa5epsv3"
 
 [programs.devnet]
-basalt_cdp_mvp = "8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3"
+basalt_cdp_mvp = "5gzoSxVDDSjdE3pPYu9GuyaDAyV2uBXm34BvWa5epsv3"
 
 [programs.testnet]
-basalt_cdp_mvp = "8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3"
+basalt_cdp_mvp = "5gzoSxVDDSjdE3pPYu9GuyaDAyV2uBXm34BvWa5epsv3"
 
 [programs.mainnet]
-basalt_cdp_mvp = "8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3"
+basalt_cdp_mvp = "5gzoSxVDDSjdE3pPYu9GuyaDAyV2uBXm34BvWa5epsv3"
 
 [registry]
 url = "https://anchor.projectserum.com"

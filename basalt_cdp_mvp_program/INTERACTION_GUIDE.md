@@ -3,9 +3,15 @@
 This guide shows you **exactly how to interact** with your deployed Solana program on localnet.
 
 ## 📋 Program Information
-- **Program ID**: `8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3`
+- **Program ID**: `5gzoSxVDDSjdE3pPYu9GuyaDAyV2uBXm34BvWa5epsv3`
 - **Network**: Localnet (http://127.0.0.1:8899)
 - **Status**: ✅ Deployed and Running
+
+## 🪙 Token Configuration
+- **SPYx Mock Collateral Mint**: `B5o7is4JQ4azcoNA9U9oN5wQ4DuQmdwLviwudFtiLuZ9`
+- **USD_RW Stablecoin Mint**: To be deployed
+- **Collateral Decimals**: 9
+- **USD_RW Decimals**: 6
 
 ---
 
@@ -14,7 +20,7 @@ This guide shows you **exactly how to interact** with your deployed Solana progr
 ### Basic Commands
 ```bash
 # Check program info
-solana program show 8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3
+solana program show 5gzoSxVDDSjdE3pPYu9GuyaDAyV2uBXm34BvWa5epsv3
 
 # Check your balance
 solana balance
@@ -23,7 +29,7 @@ solana balance
 solana slot
 
 # Monitor program logs (real-time)
-solana logs 8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3
+solana logs 5gzoSxVDDSjdE3pPYu9GuyaDAyV2uBXm34BvWa5epsv3
 ```
 
 ### Account Management
@@ -93,7 +99,7 @@ await program.methods
 ### Monitor Program Activity
 ```bash
 # In one terminal - keep this running
-solana logs 8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3
+solana logs 5gzoSxVDDSjdE3pPYu9GuyaDAyV2uBXm34BvWa5epsv3
 
 # In another terminal - run your interactions
 npx ts-node simple-interaction.ts
@@ -121,7 +127,7 @@ solana slot
 solana balance
 
 # 3. Check program status
-solana program show 8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3
+solana program show 5gzoSxVDDSjdE3pPYu9GuyaDAyV2uBXm34BvWa5epsv3
 ```
 
 ### Scenario 2: Account Creation Test

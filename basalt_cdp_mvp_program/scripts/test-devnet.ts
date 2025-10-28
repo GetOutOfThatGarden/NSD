@@ -18,7 +18,11 @@ const walletKeypair: Keypair = (wallet as any).payer as Keypair;
 
 // Setup provider and program (program initialized lazily after fetching IDL)
 const provider = new AnchorProvider(connection, wallet, AnchorProvider.defaultOptions());
-const programId = new PublicKey('8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3');
+const programId = new PublicKey('5gzoSxVDDSjdE3pPYu9GuyaDAyV2uBXm34BvWa5epsv3');
+
+// Token configuration - SPYx mock mint for testing
+const SPYX_MOCK_MINT = new PublicKey('B5o7is4JQ4azcoNA9U9oN5wQ4DuQmdwLviwudFtiLuZ9');
+
 let program: any;
 
 async function initProgram() {
@@ -43,6 +47,7 @@ async function setupTestEnvironment() {
   // 2. Create test mints for collateral and USD_RW
   console.log('🪙 Creating test token mints...');
   
+  // Note: For production testing, use SPYX_MOCK_MINT: B5o7is4JQ4azcoNA9U9oN5wQ4DuQmdwLviwudFtiLuZ9
   const collateralMint = await createMint(
     connection,
     walletKeypair,

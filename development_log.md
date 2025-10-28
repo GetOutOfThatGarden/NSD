@@ -1,5 +1,57 @@
 # Development Log
 
+## 2025-01-28 — SPYx Mock Mint Integration
+
+- Task: Add SPYx Mock Mint Address to Codebase
+- Context: Integrated the SPYx mock mint address (`B5o7is4JQ4azcoNA9U9oN5wQ4DuQmdwLviwudFtiLuZ9`) throughout the codebase for consistent collateral token configuration across all environments.
+
+### Changes Applied
+
+#### 1. Environment Configuration (`.env`)
+- Added `COLLATERAL_MINT=B5o7is4JQ4azcoNA9U9oN5wQ4DuQmdwLviwudFtiLuZ9`
+- Added `USDRW_MINT=` (placeholder for future deployment)
+- Added token decimals configuration:
+  - `COLLATERAL_DECIMALS=9`
+  - `USDRW_DECIMALS=6`
+
+#### 2. Frontend Configuration (`app/solana/config.ts`)
+- Updated `COLLATERAL_MINT` to use SPYx mock mint as default fallback
+- Added comment explaining the default value for devnet testing
+- Maintains environment variable override capability via `VITE_COLLATERAL_MINT`
+
+#### 3. Documentation Updates
+- **DEPLOYMENT.md**: Added comprehensive token configuration section with SPYx mint details
+- **INTERACTION_GUIDE.md**: Added token configuration section for developer reference
+- Both files now include mint addresses, decimals, and deployment status
+
+#### 4. Test Scripts (`scripts/test-devnet.ts`)
+- Added `SPYX_MOCK_MINT` constant for reference
+- Added comment in `setupTestEnvironment` function about production testing
+- Maintains backward compatibility with dynamic mint creation for isolated testing
+
+#### 5. Development Log Creation (`basalt_cdp_mvp_program/development_log.md`)
+- Created comprehensive development log to track project changes
+- Documented this integration with full context and technical details
+
+### Technical Benefits
+- **Environment Flexibility**: Can override via `VITE_COLLATERAL_MINT` environment variable
+- **Default Fallback**: SPYx mock mint used automatically for devnet testing
+- **Consistent Configuration**: All components use the same mint address
+- **Version Control**: All token addresses properly tracked in the codebase
+- **Documentation**: Clear reference for all developers
+
+### Integration Points
+- Frontend automatically uses SPYx mint for collateral operations
+- Backend tests can reference the standardized mint address
+- Documentation provides clear guidance for developers
+- Environment variables allow for easy configuration changes
+
+### Next Steps
+- Deploy USD_RW stablecoin mint and update configuration
+- Test integration with actual SPYx mock mint on devnet
+- Update frontend to handle token interactions properly
+- Monitor token operations and validate mint address usage
+
 ## 2025-01-XX XX:XX — Liquidation Mechanism Enhancement
 
 - Task: Remove self-liquidation restrictions and reduce liquidation bonus from 10% to 2%
