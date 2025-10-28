@@ -70,10 +70,8 @@ pub fn liquidate_vault(ctx: Context<LiquidateVault>, debt_to_liquidate: u64) -> 
         return err!(CdpError::NoDebtToRedeem);
     }
     
-    // Validate that the liquidator is not the vault owner
-    if ctx.accounts.liquidator.key() == user_vault.owner {
-        return err!(CdpError::CannotLiquidateOwnVault);
-    }
+    // Self-liquidation is now allowed - users can liquidate their own vaults
+    // This provides flexibility for users to manage their positions proactively
     
     // Validate liquidation amount
     if debt_to_liquidate == 0 || debt_to_liquidate > user_vault.debt_amount {
@@ -96,11 +94,10 @@ pub fn liquidate_vault(ctx: Context<LiquidateVault>, debt_to_liquidate: u64) -> 
         return err!(CdpError::NotUndercollateralized);
     }
     
-    // Calculate collateral to seize with liquidation bonus (10% bonus)
-    // collateral_to_seize = debt_to_liquidate * 1.1 (110% of debt value)
-    let liquidation_bonus = 110; // 110% = 10% bonus
+    // Calculate collateral to seize with liquidation bonus (2% bonus)
+    // collateral_to_seize = debt_to_liquidate * 1.02 (102% of debt value)
     let collateral_to_seize = debt_to_liquidate
-        .checked_mul(liquidation_bonus)
+        .checked_mul(LIQUIDATION_BONUS_PERCENTAGE)
         .and_then(|result| result.checked_div(100))
         .ok_or(CdpError::InterestCalculationFailed)?;
     

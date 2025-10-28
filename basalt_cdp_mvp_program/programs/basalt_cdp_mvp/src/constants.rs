@@ -15,6 +15,10 @@ pub const COLLATERAL_RATIO: u64 = 1_500_000_000_000_000_000; // 1.5 * 10^18
 /// Vaults below this ratio are eligible for liquidation
 pub const LIQUIDATION_THRESHOLD: u64 = 1_200_000_000_000_000_000; // 1.2 * 10^18
 
+/// Liquidation bonus percentage (2% = 102% total)
+/// Liquidators receive 2% bonus on collateral seized
+pub const LIQUIDATION_BONUS_PERCENTAGE: u64 = 102; // 102% = 2% bonus
+
 /// Annual interest rate (5% = 0.05 * FIXED_POINT_SCALE)
 pub const ANNUAL_INTEREST_RATE: u64 = 50_000_000_000_000_000; // 0.05 * 10^18
 
