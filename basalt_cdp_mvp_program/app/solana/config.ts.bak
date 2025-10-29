@@ -18,8 +18,7 @@ export const COLLATERAL_MINT = (() => {
 
 export const USDRW_MINT = (() => {
   const v = import.meta.env.VITE_USDRW_MINT as string | undefined;
-  // Default to devnet USDrw mint address
-  return v ? new PublicKey(v) : new PublicKey("CbagCDjUjQNHqbf1F2bvKv4qCFrpxRaFCR6opEMbA1Jo");
+  return v ? new PublicKey(v) : null;
 })();
 
 // Optional admin; used for protocol initialization UX gating

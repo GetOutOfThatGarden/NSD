@@ -20,6 +20,7 @@ pub struct MintUsdrw<'info> {
     pub user: Signer<'info>,
     
     /// The protocol configuration account
+    #[account(mut)]
     pub protocol_config: Account<'info, ProtocolConfig>,
     
     /// The user's vault account
@@ -33,6 +34,7 @@ pub struct MintUsdrw<'info> {
     pub user_vault: Account<'info, UserVault>,
     
     /// The user's collateral token account
+    #[account(mut)]
     pub user_collateral_account: Account<'info, TokenAccount>,
     
     /// The protocol's collateral vault account
@@ -40,9 +42,11 @@ pub struct MintUsdrw<'info> {
     pub protocol_collateral_account: Account<'info, TokenAccount>,
     
     /// The user's USD_RW token account
+    #[account(mut)]
     pub user_usdrw_account: Account<'info, TokenAccount>,
     
     /// The protocol's USD_RW mint account
+    #[account(mut)]
     pub usdrw_mint: Account<'info, Mint>,
     
     /// The token program
@@ -50,6 +54,9 @@ pub struct MintUsdrw<'info> {
     
     /// The system program
     pub system_program: Program<'info, System>,
+    
+    /// The associated token program
+    pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
 pub fn mint_usdrw(ctx: Context<MintUsdrw>, collateral_amount: u64) -> Result<()> {
@@ -71,25 +78,20 @@ pub fn mint_usdrw(ctx: Context<MintUsdrw>, collateral_amount: u64) -> Result<()>
         return err!(CdpError::ProtocolNotInitialized);
     }
     
-    // Calculate the maximum amount that can be minted based on collateral ratio
-    // For safety, use the total collateral (existing + new) to calculate max mintable
-    let total_collateral = user_vault.collateral_amount.saturating_add(collateral_amount);
-    
-    // Check for overflow in collateral ratio calculation
-    let max_mintable = total_collateral
-        .checked_mul(COLLATERAL_RATIO)
-        .and_then(|result| result.checked_div(FIXED_POINT_SCALE))
+    // Simple mint ratio: 670 USDrw per 1 SPYx token (collateral_amount is in lamports)
+    // SPYx has 9 decimals, USDrw has 6 decimals
+    // 1 SPYx = 1_000_000_000 lamports
+    // 670 USDrw = 670_000_000 micro-USDrw
+    // Ratio: 670_000_000 / 1_000_000_000 = 0.67
+    let mint_amount = collateral_amount
+        .checked_mul(670_000_000)  // 670 USDrw in micro-USDrw (6 decimals)
+        .and_then(|result| result.checked_div(1_000_000_000))  // 1 SPYx in lamports (9 decimals)
         .ok_or(CdpError::InterestCalculationFailed)?;
     
-    // Calculate how much can actually be minted (max_mintable - existing_debt)
-    let available_to_mint = max_mintable.saturating_sub(user_vault.debt_amount);
-    
-    if available_to_mint == 0 {
+    // Ensure we're minting at least something
+    if mint_amount == 0 {
         return err!(CdpError::ExceedsMintLimit);
     }
-    
-    // The amount to mint is the available amount (we mint the maximum possible)
-    let mint_amount = available_to_mint;
     
     // Update vault state BEFORE any external calls
     user_vault.collateral_amount = user_vault.collateral_amount.saturating_add(collateral_amount);

@@ -1,0 +1,100 @@
+BasaltCDP.tsx:187 === TRANSACTION SETUP ===
+BasaltCDP.tsx:188 Wallet: 8pFrtqrPsPGdjDfQbCQtxtrRykYJUQtZWzY6YFaWZUMN
+BasaltCDP.tsx:189 Collateral amount: 2
+BasaltCDP.tsx:190 Program ID: 5gzoSxVDDSjdE3pPYu9GuyaDAyV2uBXm34BvWa5epsv3
+BasaltCDP.tsx:191 Protocol Config PDA: GLUxypTBwacGsDsYkkG17Vn6sy3rFgCEixUEwEpuXiut
+BasaltCDP.tsx:192 User Vault PDA: GLQCLpDAfhj54gs88Kud5kWrcCAzkGzfbDPZe1hR8xhb
+BasaltCDP.tsx:193 Protocol Collateral Vault PDA: 7GU1psKdpJ3GU6FurbAdtU8CGBuoPL4oshmoYxD5oyph
+BasaltCDP.tsx:194 Collateral Mint: B5o7is4JQ4azcoNA9U9oN5wQ4DuQmdwLviwudFtiLuZ9
+BasaltCDP.tsx:195 USDrw Mint: Bg7Qqfyh1vALNoN4FgvTGKcTt5sgiJD8YRGbmCQNXMeD
+BasaltCDP.tsx:199 Collateral lamports: 2000000000
+BasaltCDP.tsx:203 USDrw to mint: 2000000
+BasaltCDP.tsx:233 WalletSendTransactionError: Unexpected error
+    at StandardWalletAdapter.sendTransaction (chunk-GRZSLH65.js?v=b5ff24d9:5168:15)
+    at async chunk-GRZSLH65.js?v=b5ff24d9:5771:12
+    at async BasaltCDP.tsx:233:25 StandardWalletAdapter {_events: Events, _eventsCount: 4, signIn: ƒ, signTransaction: ƒ, signAllTransactions: ƒ, …}signAllTransactions: async ƒ _StandardWalletAdapter_signAllTransactions2(transactions)length: 1name: "_StandardWalletAdapter_signAllTransactions2"arguments: (...)caller: (...)[[FunctionLocation]]: chunk-GRZSLH65.js?v=b5ff24d9:5264[[Prototype]]: AsyncFunction[[Scopes]]: Scopes[2]0: Module {SIGNATURE_LENGTH_IN_BYTES: 64, require_mask_pattern: ƒ, require_regex: ƒ, require_numeric_data: ƒ, assertSecureContext: ƒ, …}1: Global {window: Window, self: Window, document: document, name: '', location: Location, …}signIn: async ƒ _StandardWalletAdapter_signIn2(input = {})length: 0name: "_StandardWalletAdapter_signIn2"arguments: (...)caller: (...)[[FunctionLocation]]: chunk-GRZSLH65.js?v=b5ff24d9:5314[[Prototype]]: AsyncFunction[[Scopes]]: Scopes[2]signMessage: async ƒ _StandardWalletAdapter_signMessage2(message)signTransaction: async ƒ _StandardWalletAdapter_signTransaction2(transaction)_events: Events {readyStateChange: EE, connect: EE, disconnect: Array(2), error: EE}_eventsCount: 4connected: (...)connecting: (...)icon: (...)name: (...)publicKey: (...)readyState: (...)standard: (...)supportedTransactionVersions: (...)url: (...)wallet: (...)[[Prototype]]: BaseWalletAdapter
+(anonymous) @ chunk-GRZSLH65.js?v=b5ff24d9:5670
+handleError @ chunk-GRZSLH65.js?v=b5ff24d9:5731
+emit @ chunk-CWK3HNI5.js?v=b5ff24d9:81
+sendTransaction @ chunk-GRZSLH65.js?v=b5ff24d9:5171
+await in sendTransaction
+(anonymous) @ chunk-GRZSLH65.js?v=b5ff24d9:5771
+(anonymous) @ BasaltCDP.tsx:233
+await in (anonymous)
+executeDispatch @ react-dom_client.js?v=b5ff24d9:13622
+runWithFiberInDEV @ react-dom_client.js?v=b5ff24d9:997
+processDispatchQueue @ react-dom_client.js?v=b5ff24d9:13658
+(anonymous) @ react-dom_client.js?v=b5ff24d9:14071
+batchedUpdates$1 @ react-dom_client.js?v=b5ff24d9:2626
+dispatchEventForPluginEventSystem @ react-dom_client.js?v=b5ff24d9:13763
+dispatchEvent @ react-dom_client.js?v=b5ff24d9:16784
+dispatchDiscreteEvent @ react-dom_client.js?v=b5ff24d9:16765
+BasaltCDP.tsx:246 === TRANSACTION ERROR DETAILS ===
+(anonymous) @ BasaltCDP.tsx:246
+await in (anonymous)
+executeDispatch @ react-dom_client.js?v=b5ff24d9:13622
+runWithFiberInDEV @ react-dom_client.js?v=b5ff24d9:997
+processDispatchQueue @ react-dom_client.js?v=b5ff24d9:13658
+(anonymous) @ react-dom_client.js?v=b5ff24d9:14071
+batchedUpdates$1 @ react-dom_client.js?v=b5ff24d9:2626
+dispatchEventForPluginEventSystem @ react-dom_client.js?v=b5ff24d9:13763
+dispatchEvent @ react-dom_client.js?v=b5ff24d9:16784
+dispatchDiscreteEvent @ react-dom_client.js?v=b5ff24d9:16765
+BasaltCDP.tsx:247 Full error object: WalletSendTransactionError: Unexpected error
+    at StandardWalletAdapter.sendTransaction (chunk-GRZSLH65.js?v=b5ff24d9:5168:15)
+    at async chunk-GRZSLH65.js?v=b5ff24d9:5771:12
+    at async BasaltCDP.tsx:233:25
+(anonymous) @ BasaltCDP.tsx:247
+await in (anonymous)
+executeDispatch @ react-dom_client.js?v=b5ff24d9:13622
+runWithFiberInDEV @ react-dom_client.js?v=b5ff24d9:997
+processDispatchQueue @ react-dom_client.js?v=b5ff24d9:13658
+(anonymous) @ react-dom_client.js?v=b5ff24d9:14071
+batchedUpdates$1 @ react-dom_client.js?v=b5ff24d9:2626
+dispatchEventForPluginEventSystem @ react-dom_client.js?v=b5ff24d9:13763
+dispatchEvent @ react-dom_client.js?v=b5ff24d9:16784
+dispatchDiscreteEvent @ react-dom_client.js?v=b5ff24d9:16765
+BasaltCDP.tsx:248 Error message: Unexpected error
+(anonymous) @ BasaltCDP.tsx:248
+await in (anonymous)
+executeDispatch @ react-dom_client.js?v=b5ff24d9:13622
+runWithFiberInDEV @ react-dom_client.js?v=b5ff24d9:997
+processDispatchQueue @ react-dom_client.js?v=b5ff24d9:13658
+(anonymous) @ react-dom_client.js?v=b5ff24d9:14071
+batchedUpdates$1 @ react-dom_client.js?v=b5ff24d9:2626
+dispatchEventForPluginEventSystem @ react-dom_client.js?v=b5ff24d9:13763
+dispatchEvent @ react-dom_client.js?v=b5ff24d9:16784
+dispatchDiscreteEvent @ react-dom_client.js?v=b5ff24d9:16765
+BasaltCDP.tsx:249 Error code: undefined
+(anonymous) @ BasaltCDP.tsx:249
+await in (anonymous)
+executeDispatch @ react-dom_client.js?v=b5ff24d9:13622
+runWithFiberInDEV @ react-dom_client.js?v=b5ff24d9:997
+processDispatchQueue @ react-dom_client.js?v=b5ff24d9:13658
+(anonymous) @ react-dom_client.js?v=b5ff24d9:14071
+batchedUpdates$1 @ react-dom_client.js?v=b5ff24d9:2626
+dispatchEventForPluginEventSystem @ react-dom_client.js?v=b5ff24d9:13763
+dispatchEvent @ react-dom_client.js?v=b5ff24d9:16784
+dispatchDiscreteEvent @ react-dom_client.js?v=b5ff24d9:16765
+BasaltCDP.tsx:250 Error name: WalletSendTransactionError
+(anonymous) @ BasaltCDP.tsx:250
+await in (anonymous)
+executeDispatch @ react-dom_client.js?v=b5ff24d9:13622
+runWithFiberInDEV @ react-dom_client.js?v=b5ff24d9:997
+processDispatchQueue @ react-dom_client.js?v=b5ff24d9:13658
+(anonymous) @ react-dom_client.js?v=b5ff24d9:14071
+batchedUpdates$1 @ react-dom_client.js?v=b5ff24d9:2626
+dispatchEventForPluginEventSystem @ react-dom_client.js?v=b5ff24d9:13763
+dispatchEvent @ react-dom_client.js?v=b5ff24d9:16784
+dispatchDiscreteEvent @ react-dom_client.js?v=b5ff24d9:16765
+BasaltCDP.tsx:270 === END ERROR DETAILS ===
+(anonymous) @ BasaltCDP.tsx:270
+await in (anonymous)
+executeDispatch @ react-dom_client.js?v=b5ff24d9:13622
+runWithFiberInDEV @ react-dom_client.js?v=b5ff24d9:997
+processDispatchQueue @ react-dom_client.js?v=b5ff24d9:13658
+(anonymous) @ react-dom_client.js?v=b5ff24d9:14071
+batchedUpdates$1 @ react-dom_client.js?v=b5ff24d9:2626
+dispatchEventForPluginEventSystem @ react-dom_client.js?v=b5ff24d9:13763
+dispatchEvent @ react-dom_client.js?v=b5ff24d9:16784
+dispatchDiscreteEvent @ react-dom_client.js?v=b5ff24d9:16765

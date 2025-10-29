@@ -1,0 +1,875 @@
+{
+  "address": "5gzoSxVDDSjdE3pPYu9GuyaDAyV2uBXm34BvWa5epsv3",
+  "metadata": {
+    "name": "basalt_cdp_mvp",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "calculate_interest",
+      "docs": [
+        "Calculate and accrue interest on vaults"
+      ],
+      "discriminator": [
+        161,
+        169,
+        45,
+        206,
+        34,
+        194,
+        23,
+        46
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "docs": [
+            "The user who owns the vault"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "protocol_config",
+          "docs": [
+            "The protocol configuration account"
+          ]
+        },
+        {
+          "name": "user_vault",
+          "docs": [
+            "The user's vault account"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "account",
+                "path": "protocol_config"
+              }
+            ]
+          }
+        },
+        {
+          "name": "clock",
+          "docs": [
+            "The system clock"
+          ],
+          "address": "SysvarC1ock11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_collateral_vault",
+      "docs": [
+        "Initialize the protocol collateral vault token account (PDA)"
+      ],
+      "discriminator": [
+        50,
+        63,
+        54,
+        33,
+        53,
+        166,
+        24,
+        61
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "docs": [
+            "Protocol owner who pays for account initialization"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "protocol_config",
+          "docs": [
+            "Protocol configuration account (PDA authority for vault)"
+          ]
+        },
+        {
+          "name": "collateral_mint",
+          "docs": [
+            "Collateral mint used by the protocol"
+          ]
+        },
+        {
+          "name": "protocol_collateral_account",
+          "docs": [
+            "Protocol collateral vault token account (PDA)"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  108,
+                  108,
+                  97,
+                  116,
+                  101,
+                  114,
+                  97,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "protocol_config"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "docs": [
+            "Token program"
+          ],
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "docs": [
+            "System program"
+          ],
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_protocol",
+      "docs": [
+        "Initialize the protocol with configuration parameters"
+      ],
+      "discriminator": [
+        188,
+        233,
+        252,
+        106,
+        134,
+        146,
+        202,
+        91
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "docs": [
+            "The account that will own the protocol"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "protocol_config",
+          "docs": [
+            "The protocol configuration account to be initialized"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  116,
+                  111,
+                  99,
+                  111,
+                  108,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "collateral_mint",
+          "docs": [
+            "The collateral mint account"
+          ]
+        },
+        {
+          "name": "usdrw_mint",
+          "docs": [
+            "The synthetic debt mint account (USD_RW)"
+          ]
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "_collateral_mint",
+          "type": "pubkey"
+        },
+        {
+          "name": "_usdrw_mint",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "liquidate_vault",
+      "docs": [
+        "Liquidate an undercollateralized vault"
+      ],
+      "discriminator": [
+        106,
+        212,
+        123,
+        68,
+        193,
+        252,
+        239,
+        189
+      ],
+      "accounts": [
+        {
+          "name": "liquidator",
+          "docs": [
+            "The user who wants to liquidate the vault"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "protocol_config",
+          "docs": [
+            "The protocol configuration account"
+          ]
+        },
+        {
+          "name": "user_vault",
+          "docs": [
+            "The vault to be liquidated"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "account",
+                "path": "protocol_config"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user",
+          "docs": [
+            "The user who owns the vault",
+            "No lamports or account data are read or written, and no CPI is executed",
+            "against this account. Using `AccountInfo` avoids unnecessary deserialization."
+          ]
+        },
+        {
+          "name": "protocol_collateral_account",
+          "docs": [
+            "The protocol's collateral token account (pda)"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  108,
+                  108,
+                  97,
+                  116,
+                  101,
+                  114,
+                  97,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "protocol_config"
+              }
+            ]
+          }
+        },
+        {
+          "name": "liquidator_collateral_account",
+          "docs": [
+            "The liquidator's collateral token account"
+          ],
+          "writable": true
+        },
+        {
+          "name": "liquidator_usdrw_account",
+          "docs": [
+            "The liquidator's USD_RW token account (to burn USD_RW)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "usdrw_mint",
+          "docs": [
+            "The protocol's USD_RW mint account"
+          ],
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "docs": [
+            "The token program"
+          ],
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "debt_to_liquidate",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "mint_usdrw",
+      "docs": [
+        "Mint USD_RW tokens by depositing collateral"
+      ],
+      "discriminator": [
+        170,
+        18,
+        183,
+        209,
+        84,
+        105,
+        148,
+        224
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "docs": [
+            "The user who wants to mint USD_RW"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "protocol_config",
+          "docs": [
+            "The protocol configuration account"
+          ],
+          "writable": true
+        },
+        {
+          "name": "user_vault",
+          "docs": [
+            "The user's vault account"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "account",
+                "path": "protocol_config"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_collateral_account",
+          "docs": [
+            "The user's collateral token account"
+          ],
+          "writable": true
+        },
+        {
+          "name": "protocol_collateral_account",
+          "docs": [
+            "The protocol's collateral vault account"
+          ],
+          "writable": true
+        },
+        {
+          "name": "user_usdrw_account",
+          "docs": [
+            "The user's USD_RW token account"
+          ],
+          "writable": true
+        },
+        {
+          "name": "usdrw_mint",
+          "docs": [
+            "The protocol's USD_RW mint account"
+          ],
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "docs": [
+            "The token program"
+          ],
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "docs": [
+            "The system program"
+          ],
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "associated_token_program",
+          "docs": [
+            "The associated token program"
+          ],
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "redeem_collateral",
+      "docs": [
+        "Redeem collateral by repaying debt"
+      ],
+      "discriminator": [
+        243,
+        227,
+        41,
+        246,
+        233,
+        128,
+        116,
+        11
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "docs": [
+            "The user who wants to redeem collateral"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "protocol_config",
+          "docs": [
+            "The protocol configuration account"
+          ]
+        },
+        {
+          "name": "user_vault",
+          "docs": [
+            "The user's vault account"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "account",
+                "path": "protocol_config"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_collateral_account",
+          "docs": [
+            "The user's collateral token account"
+          ],
+          "writable": true
+        },
+        {
+          "name": "protocol_collateral_account",
+          "docs": [
+            "The protocol's collateral token account (pda)"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  108,
+                  108,
+                  97,
+                  116,
+                  101,
+                  114,
+                  97,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "protocol_config"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_usdrw_account",
+          "docs": [
+            "The user's USD_RW token account"
+          ],
+          "writable": true
+        },
+        {
+          "name": "usdrw_mint",
+          "docs": [
+            "The protocol's USD_RW mint account"
+          ],
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "docs": [
+            "The token program"
+          ],
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "ProtocolConfig",
+      "discriminator": [
+        207,
+        91,
+        250,
+        28,
+        152,
+        179,
+        215,
+        209
+      ]
+    },
+    {
+      "name": "UserVault",
+      "discriminator": [
+        23,
+        76,
+        96,
+        159,
+        210,
+        10,
+        5,
+        22
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InsufficientCollateralRatio",
+      "msg": "Insufficient collateral ratio"
+    },
+    {
+      "code": 6001,
+      "name": "Undercollateralized",
+      "msg": "Vault is undercollateralized"
+    },
+    {
+      "code": 6002,
+      "name": "VaultAlreadyLiquidated",
+      "msg": "Vault is already liquidated"
+    },
+    {
+      "code": 6003,
+      "name": "ExceedsMintLimit",
+      "msg": "Mint amount exceeds allowed limit"
+    },
+    {
+      "code": 6004,
+      "name": "ExceedsDebt",
+      "msg": "Redeem amount exceeds debt"
+    },
+    {
+      "code": 6005,
+      "name": "BelowMinimumCollateral",
+      "msg": "Collateral amount below minimum"
+    },
+    {
+      "code": 6006,
+      "name": "MaxVaultsExceeded",
+      "msg": "Maximum vaults per user exceeded"
+    },
+    {
+      "code": 6007,
+      "name": "NoDebtToRedeem",
+      "msg": "Vault has no debt to redeem"
+    },
+    {
+      "code": 6008,
+      "name": "NoCollateralToLiquidate",
+      "msg": "Vault has no collateral to liquidate"
+    },
+    {
+      "code": 6009,
+      "name": "NotUndercollateralized",
+      "msg": "Vault is not undercollateralized"
+    },
+    {
+      "code": 6010,
+      "name": "InterestCalculationFailed",
+      "msg": "Interest calculation failed"
+    },
+    {
+      "code": 6011,
+      "name": "ProtocolNotInitialized",
+      "msg": "Protocol not initialized"
+    },
+    {
+      "code": 6012,
+      "name": "VaultNotFound",
+      "msg": "Vault not found"
+    },
+    {
+      "code": 6013,
+      "name": "CannotLiquidateOwnVault",
+      "msg": "Cannot liquidate your own vault"
+    },
+    {
+      "code": 6014,
+      "name": "InsufficientCollateralForMint",
+      "msg": "Insufficient collateral for minting"
+    },
+    {
+      "code": 6015,
+      "name": "InvalidProtocolAdmin",
+      "msg": "Invalid protocol admin address"
+    },
+    {
+      "code": 6016,
+      "name": "UnauthorizedProtocolInitialization",
+      "msg": "Unauthorized protocol initialization"
+    },
+    {
+      "code": 6017,
+      "name": "InvalidMintConfiguration",
+      "msg": "Invalid mint configuration"
+    }
+  ],
+  "types": [
+    {
+      "name": "ProtocolConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "docs": [
+              "Owner of the protocol (can modify settings)"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "collateral_mint",
+            "docs": [
+              "Mint address for the collateral token"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "usdrw_mint",
+            "docs": [
+              "Mint address for the synthetic debt token (USD_RW)"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "collateral_ratio",
+            "docs": [
+              "Required collateral ratio (e.g., 150% = 1.5 * 2^64)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "interest_rate",
+            "docs": [
+              "Annual interest rate (e.g., 5% = 0.05 * 2^64)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "liquidation_threshold",
+            "docs": [
+              "Liquidation threshold ratio (e.g., 120% = 1.2 * 2^64)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "last_interest_update",
+            "docs": [
+              "Timestamp of the last interest update"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "Bump seed for PDA derivation"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UserVault",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "docs": [
+              "Owner of this vault"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "protocol_config",
+            "docs": [
+              "Reference to the protocol configuration"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "collateral_amount",
+            "docs": [
+              "Amount of collateral deposited (fixed-point 64.64)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "debt_amount",
+            "docs": [
+              "Amount of debt owed (fixed-point 64.64)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "last_interest_update",
+            "docs": [
+              "Timestamp of the last interest update"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "Bump seed for PDA derivation"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}

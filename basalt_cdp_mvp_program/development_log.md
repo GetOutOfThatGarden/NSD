@@ -35,6 +35,58 @@
 - Create user USDrw ATA and test `mint_usdrw` instruction.
 - Document SPYx mint authority setup and confirm mint authority transfers if needed.
 
+## 2025-01-29 - Protocol Deployment and Configuration
+
+### Task: Deploy Program to Devnet and Configure Frontend
+- **Time**: 14:30 - 15:45
+- **Description**: Deployed the Basalt CDP program to devnet and updated frontend configuration
+
+#### Code Changes:
+- Updated `app/solana/config.ts` with new program ID: `5gzoSxVDDSjdE3pPYu9GuyaDAyV2uBXm34BvWa5epsv3`
+- Program successfully deployed to devnet
+
+#### Issues Faced:
+- Initial transaction failures due to program not being deployed on devnet
+- Required proper devnet deployment and configuration
+
+#### Solutions Implemented:
+- Deployed program to devnet using `anchor deploy --provider.cluster devnet`
+- Updated frontend configuration with correct program ID
+- Verified deployment on Solana Explorer
+
+## 2025-01-29 - Protocol Initialization on Devnet
+
+### Task: Initialize Protocol Configuration and Collateral Vault
+- **Time**: 16:00 - 17:30
+- **Description**: Created and executed protocol initialization script to set up the CDP protocol on devnet
+
+#### Code Changes:
+- Created `scripts/init-protocol.ts` for protocol initialization
+- Created USDrw mint on devnet: `CbagCDjUjQNHqbf1F2bvKv4qCFrpxRaFCR6opEMbA1Jo`
+- Updated `app/solana/config.ts` with USDrw mint address
+- Fixed PDA derivation for collateral vault using correct seeds: `[b"collateral_vault", protocol_config.key().as_ref()]`
+
+#### Issues Faced:
+- ES module compatibility issues with `__dirname` and `require`
+- Missing accounts in initialization instructions (collateralMint, usdrwMint)
+- Incorrect PDA derivation for protocol collateral vault
+- AccountNotInitialized error for collateral mint
+
+#### Solutions Implemented:
+- Fixed ES module issues by using `import.meta.url` and removing `require.main` check
+- Added all required accounts to initialization instructions
+- Corrected collateral vault PDA derivation using proper seeds
+- Used existing SPYx mock mint: `B5o7is4JQ4azcoNA9U9oN5wQ4DuQmdwLviwudFtiLuZ9`
+- Successfully initialized protocol config PDA: `GLUxypTBwacGsDsYkkG17Vn6sy3rFgCEixUEwEpuXiut`
+- Successfully initialized collateral vault PDA: `7GU1psKdpJ3GU6FurbAdtU8CGBuoPL4oshmoYxD5oyph`
+
+#### Transaction Details:
+- Collateral vault initialization transaction: `i3WuYmczYupnVxi5E4XRcEJWM4B11AEwFjNNHt5TjFEsopRcyEWXyyH5DWyAx1t3v8PeBmg5JUTs9sKbfPzs6Cv`
+
+#### Next Steps:
+- Test deposit transaction with fully initialized protocol
+- Verify CDP operations work correctly in frontend
+
 ## 2025-01-28 - SPYx Mock Mint Integration
 
 ### Task: Add SPYx Mock Mint Address to Codebase
@@ -212,3 +264,70 @@ Derived dedicated PDAs to serve as mint authorities for the mock SPYx collateral
 2. Deploy USDrw mint and set its `mint_authority` to the USDrw mint authority PDA.
 3. Ensure program instructions use `invoke_signed` with the correct seeds/bump for mint operations.
 4. Add CLI/script steps to update mint authorities on devnet.
+
+## 2025-01-28 - Basalt CDP Frontend Tech Demo
+
+### Task: Create Streamlined Frontend Application for CDP Functionality
+**Date**: 2025-01-28  
+**Description**: Developed a React TypeScript frontend application (`Basalt_FE_tech_demo`) to demonstrate collateral deposit and stablecoin minting functionality on Solana devnet.
+
+### Code Changes:
+1. **Project Setup**:
+   - Created new Vite + React + TypeScript project: `Basalt_FE_tech_demo`
+   - Installed Solana dependencies: `@solana/web3.js`, `@solana/wallet-adapter-*`, `@coral-xyz/anchor`, `@solana/spl-token`
+
+2. **Configuration (src/config.ts)**:
+   - Centralized devnet configuration with program ID, mint addresses, and RPC settings
+   - Program ID: `8S5e9SrQyDgWvtXaaEpKLyoC46QEqBuDP9xjdx8K5az3` (from IDL)
+   - USDrw Mint: `Bg7Qqfyh1vALNoN4FgvTGKcTt5sgiJD8YRGbmCQNXMeD`
+   - Collateral Mint: `B5o7is4JQ4azcoNA9U9oN5wQ4DuQmdwLviwudFtiLuZ9` (SPYx mock)
+
+3. **Wallet Integration (src/components/WalletProvider.tsx)**:
+   - Configured Solana wallet adapter with Phantom, Solflare, and Torus support
+   - Set up devnet connection with proper styling imports
+   - Fixed ES6 import syntax for wallet adapter styles
+
+4. **Main CDP Component (src/components/BasaltCDP.tsx)**:
+   - Implemented wallet connection and Anchor program integration
+   - Created PDA derivations for protocol config, user vault, and protocol collateral vault
+   - Built `handleDepositAndMint` function for bundled collateral deposit and USDrw minting
+   - Added token account management with automatic ATA creation
+   - Integrated transaction status tracking and Solana Explorer links
+
+5. **User Interface (src/App.tsx, src/App.css)**:
+   - Modern, clean design with dark theme
+   - Responsive input fields for collateral amount
+   - Status indicators for transaction progress (loading, success, error)
+   - Wallet connection/disconnection buttons
+   - Transaction explorer links for devnet verification
+
+6. **IDL Integration (src/idl/basalt_cdp_mvp.json)**:
+   - Copied program IDL from `basalt_cdp_mvp_program/target/idl/`
+   - Enables type-safe interaction with Basalt CDP program instructions
+
+### Features Implemented:
+- **Wallet Connection**: Multi-wallet support with Phantom, Solflare, Torus
+- **Devnet Integration**: Configured for Solana devnet testing
+- **Collateral Deposit**: SPYx token deposit functionality
+- **USDrw Minting**: Stablecoin minting based on collateral ratio
+- **Transaction Tracking**: Real-time status updates and explorer links
+- **Error Handling**: Comprehensive error messages and user feedback
+- **Responsive UI**: Modern interface with proper loading states
+
+### Technical Implementation:
+- **Anchor Provider**: Custom wallet adapter integration for transaction signing
+- **PDA Management**: Automatic derivation of protocol and user-specific PDAs
+- **Token Accounts**: Automatic ATA creation and management for both collateral and USDrw
+- **Transaction Building**: Proper instruction sequencing for deposit and mint operations
+
+### Development Server:
+- Successfully running on `http://localhost:5173/`
+- Hot module reload (HMR) working for development
+- No TypeScript or runtime errors
+
+### Next Steps:
+1. Test wallet connection with actual Phantom wallet
+2. Test deposit and mint functionality on devnet
+3. Verify transaction execution and token balance updates
+4. Add additional UI features (balance display, transaction history)
+5. Implement error recovery and retry mechanisms
