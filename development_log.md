@@ -244,6 +244,31 @@
 
 ---
 
+## 2025-01-28 - Mint Authority PDAs for SPYx and USDrw
+
+### Task Description
+Derived dedicated PDAs to serve as mint authorities for the mock SPYx collateral mint and the USDrw stablecoin mint on devnet (Basalt Program ID: `5gzoSxVDDSjdE3pPYu9GuyaDAyV2uBXm34BvWa5epsv3`).
+
+### PDA Addresses
+- SPYx Mint Authority PDA (seed `"spyx_mint_authority"`): `EWtqdX8tmYPK5HzLxYfyRzozznv7Qop4kJ1e8DEn48r9`
+- USDrw Mint Authority PDA (seed `"usdrw_mint_authority"`): `Gtt61WFSEyAypK6AT9sgNikMwY9thmYCiEWdbnA68Cd`
+
+### Code Changes
+- Updated `examples/create-pdas.ts` to derive and print mint authority PDAs.
+- Updated `docs/PDA_REFERENCE.md` with a new "Mint Authority PDAs" section covering seeds, TS/Rust usage, and notes.
+
+### Issues/Challenges
+- Clarified that PDAs do not require an initialized account to act as authorities; they must be derived and used via `invoke_signed`.
+
+### Solutions Implemented
+- Added deterministic seeds for mint authority PDAs and documented CPI signing flows.
+
+### Next Steps
+1. Set the SPYx mint's `mint_authority` to the SPYx mint authority PDA.
+2. Deploy USDrw mint and set its `mint_authority` to the USDrw mint authority PDA.
+3. Ensure program instructions use `invoke_signed` with the correct seeds/bump for mint operations.
+4. Add CLI/script steps to update mint authorities on devnet.
+
 ## December 27, 2024 - Comprehensive Minting Process Documentation
 
 ### Task: Technical Specification Creation
