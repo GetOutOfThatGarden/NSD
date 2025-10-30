@@ -59,6 +59,7 @@
     "@solana/wallet-adapter-wallets": "^0.19.15",
     "@solana/web3.js": "^1.78.0",
     "anchorx-ray": "^0.1.0",
+    "buffer": "^6.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "*",
     "cmdk": "^1.1.1",

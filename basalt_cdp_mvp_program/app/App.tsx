@@ -7,6 +7,14 @@ import { Badge } from './components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { AlertTriangle, TrendingUp, TrendingDown, Wallet, RefreshCw } from 'lucide-react';
 import { BasaltLogo } from './components/BasaltLogo.tsx';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { PublicKey, Transaction, ComputeBudgetProgram } from '@solana/web3.js';
+import { getAssociatedTokenAddress, getMint } from '@solana/spl-token';
+import { buildMintUsdrwInstruction, buildRedeemCollateralInstruction } from './solana/instructions';
+import { findProtocolConfigPda, findUserVaultPda, findProtocolCollateralAccountPda } from './solana/pdas';
+import { PROGRAM_ID, COLLATERAL_MINT, USDRW_MINT } from './solana/config';
+import { useAccountData } from './hooks/useAccountData';
 
 type Scenario = 'baseline' | 'scenario1' | 'scenario2' | 'scenario3';
 
@@ -40,25 +48,41 @@ const scenarios: Record<Scenario, ScenarioData> = {
 };
 
 export default function App() {
+  // Wallet integration
+  const { publicKey, sendTransaction, connected } = useWallet();
+  const { connection } = useConnection();
+  
+  // Real-time account data
+  const { 
+    userVault, 
+    protocolConfig, 
+    isLoading: accountLoading, 
+    error: accountError, 
+    healthRatio, 
+    isLiquidatable, 
+    collateralValue, 
+    debtValue,
+    refreshData 
+  } = useAccountData();
+  
+  // Transaction state
+  const [isTransacting, setIsTransacting] = useState(false);
+  const [transactionError, setTransactionError] = useState<string | null>(null);
+  
   const [activeScenario, setActiveScenario] = useState<Scenario>('baseline');
-  const [spyAmount, setSpyAmount] = useState('100');
-  const [usdrwAmount, setUsdrwAmount] = useState('40000');
+  const [spyAmount, setSpyAmount] = useState('');
+  const [usdrwAmount, setUsdrwAmount] = useState('');
   const [activeTab, setActiveTab] = useState('mint-borrow');
   const [usdrwRepayAmount, setUsdrwRepayAmount] = useState('0');
   const [spyWithdrawAmount, setSpyWithdrawAmount] = useState('0');
   const [customScenario3, setCustomScenario3] = useState('-20');
   const [customScenario3Error, setCustomScenario3Error] = useState(false);
-  // Visual spacing test states
-  const [testCards, setTestCards] = useState<number[]>([1, 2, 3]);
-  const [spacingCheck, setSpacingCheck] = useState<{initial:boolean; resize:boolean; dynamic:boolean; details:string[]}>({
-    initial: true,
-    resize: true,
-    dynamic: true,
-    details: []
-  });
+  
+  // LTV ratio for the demo slider (cosmetic)
+  const [ltvRatio, setLtvRatio] = useState(50); // Default to 50%
   
   // Live price data - Ready for API integration
-  const [spyPrice, setSpyPrice] = useState<number>(550); // Static price - replace with API data
+  const [spyPrice, setSpyPrice] = useState<number>(670); // Updated to $670 for demo
   const [priceLoading, setPriceLoading] = useState(false);
   const [priceError, setPriceError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -66,54 +90,16 @@ export default function App() {
   // Responsive gap: min 16px (1rem) on mobile, scales up on larger screens
   const rowGapClass = "gap-4 sm:gap-5 lg:gap-6";
 
-  // Utilities to measure spacing between cards in a row
-  function measureRowGap(rowId: string): number | null {
-    if (typeof document === 'undefined') return null;
-    const row = document.getElementById(rowId);
-    if (!row) return null;
-    const children = Array.from(row.children) as HTMLElement[];
-    if (children.length < 2) return null;
-    let minGap = Infinity;
-    for (let i = 0; i < children.length - 1; i++) {
-      const a = children[i].getBoundingClientRect();
-      const b = children[i + 1].getBoundingClientRect();
-      const gap = b.left - a.right;
-      minGap = Math.min(minGap, gap);
-    }
-    return minGap === Infinity ? null : minGap;
-  }
-
-  function runSpacingChecks() {
-    const ids = ['position-row', 'actions-row', 'metrics-row', 'test-row'];
-    const details: string[] = [];
-    let pass = true;
-    for (const id of ids) {
-      const gap = measureRowGap(id);
-      if (gap == null) {
-        details.push(`${id}: n/a`);
-      } else {
-        const px = Math.round(gap);
-        details.push(`${id}: ${px}px`);
-        if (gap < 16) pass = false;
-      }
-    }
-    setSpacingCheck(prev => ({ ...prev, initial: pass, resize: pass, details }));
-  }
-
+  // Auto-populate USDrw field based on SPY amount and LTV ratio
   useEffect(() => {
-    runSpacingChecks();
-    const handleResize = () => {
-      runSpacingChecks();
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    runSpacingChecks();
-    const gap = measureRowGap('test-row');
-    setSpacingCheck(prev => ({ ...prev, dynamic: (gap ?? 16) >= 16 }));
-  }, [testCards]);
+    if (spyAmount && !isNaN(parseFloat(spyAmount))) {
+      const spyValue = parseFloat(spyAmount) * spyPrice;
+      const usdrwToMint = (spyValue * ltvRatio) / 100;
+      setUsdrwAmount(usdrwToMint.toFixed(2));
+    } else {
+      setUsdrwAmount('');
+    }
+  }, [spyAmount, ltvRatio, spyPrice]);
 
   // TODO: Implement real API integration
   // CoinMarketCap API requires a backend proxy to avoid CORS issues
@@ -136,6 +122,365 @@ export default function App() {
       console.error('Error fetching SPYX price:', error);
       setPriceError('Failed to load live price. Using fallback.');
       setPriceLoading(false);
+    }
+  };
+
+  // Transaction functions
+  const handleDepositAndMint = async () => {
+    if (!publicKey || !connected) {
+      setTransactionError('Please connect your wallet first');
+      return;
+    }
+
+    try {
+      setIsTransacting(true);
+      setTransactionError(null);
+
+      console.log('🚀 Starting deposit and mint transaction...');
+      console.log('📊 Input values:', { spyAmount, usdrwAmount });
+
+      const collateralAmount = parseFloat(spyAmount);
+      const usdrwMintAmount = parseFloat(usdrwAmount);
+
+      console.log('🔢 Parsed amounts:', { collateralAmount, usdrwMintAmount });
+
+      if (isNaN(collateralAmount) || collateralAmount <= 0) {
+        throw new Error('Invalid collateral amount');
+      }
+      if (isNaN(usdrwMintAmount) || usdrwMintAmount <= 0) {
+        throw new Error('Invalid USDrw mint amount');
+      }
+
+      // Fetch collateral mint information to get correct decimals
+      console.log('🔍 Fetching collateral mint information...');
+      const collateralMintInfo = await getMint(connection, COLLATERAL_MINT);
+      const collateralDecimals = collateralMintInfo.decimals;
+      console.log('📊 Collateral mint decimals:', collateralDecimals);
+
+      // Convert collateral amount to lamports using correct decimals
+      const collateralAmountLamports = Math.floor(collateralAmount * Math.pow(10, collateralDecimals));
+      console.log('💰 Collateral amount in lamports:', collateralAmountLamports);
+
+      // Find PDAs
+      console.log('🔍 Finding PDAs...');
+      const [protocolConfigPda] = findProtocolConfigPda(PROGRAM_ID);
+      const [userVaultPda] = findUserVaultPda(publicKey, protocolConfigPda, PROGRAM_ID);
+      const [protocolCollateralAccountPda] = findProtocolCollateralAccountPda(protocolConfigPda, PROGRAM_ID);
+
+      console.log('📋 PDAs found:', {
+        protocolConfig: protocolConfigPda.toBase58(),
+        userVault: userVaultPda.toBase58(),
+        protocolCollateralAccount: protocolCollateralAccountPda.toBase58()
+      });
+
+      // Verify protocol configuration account exists
+      console.log('🔍 Checking protocol configuration account...');
+      try {
+        const protocolConfigInfo = await connection.getAccountInfo(protocolConfigPda);
+        if (!protocolConfigInfo) {
+          throw new Error('Protocol configuration account does not exist. Please initialize the protocol first.');
+        }
+        console.log('✅ Protocol configuration account exists:', {
+          owner: protocolConfigInfo.owner.toString(),
+          dataLength: protocolConfigInfo.data.length,
+          lamports: protocolConfigInfo.lamports,
+        });
+      } catch (configError) {
+        console.error('❌ Protocol configuration check failed:', configError);
+        throw configError;
+      }
+
+      // Derive Associated Token Accounts
+      console.log('🔗 Deriving token accounts...');
+      const userCollateralAccount = await getAssociatedTokenAddress(
+        COLLATERAL_MINT,
+        publicKey
+      );
+      
+      const userUsdrwAccount = await getAssociatedTokenAddress(
+        USDRW_MINT,
+        publicKey
+      );
+
+      console.log('🏦 Token accounts:', {
+        userCollateral: userCollateralAccount.toBase58(),
+        userUsdrw: userUsdrwAccount.toBase58(),
+        collateralMint: COLLATERAL_MINT.toBase58(),
+        usdrwMint: USDRW_MINT.toBase58()
+      });
+
+      // Check if token accounts exist
+      console.log('✅ Checking token account balances...');
+      try {
+        const collateralAccountInfo = await connection.getAccountInfo(userCollateralAccount);
+        const usdrwAccountInfo = await connection.getAccountInfo(userUsdrwAccount);
+        
+        console.log('💳 Account existence:', {
+          collateralExists: !!collateralAccountInfo,
+          usdrwExists: !!usdrwAccountInfo
+        });
+
+        if (collateralAccountInfo) {
+          const collateralBalance = await connection.getTokenAccountBalance(userCollateralAccount);
+          console.log('💰 Collateral balance:', collateralBalance.value);
+        }
+      } catch (balanceError) {
+        console.warn('⚠️ Could not check token balances:', balanceError);
+      }
+
+      // Build instruction with proper token accounts
+      // NOTE: The Rust program expects collateral_amount, not usdrw_amount
+      console.log('🔨 Building transaction instruction...');
+      const instruction = buildMintUsdrwInstruction({
+        user: publicKey,
+        protocolConfig: protocolConfigPda,
+        userVault: userVaultPda,
+        userCollateralAccount: userCollateralAccount,
+        protocolCollateralAccount: protocolCollateralAccountPda,
+        userUsdrwAccount: userUsdrwAccount,
+        usdrwMint: USDRW_MINT,
+        amount: collateralAmount, // Pass unscaled amount - toU64Le will handle the scaling
+        amountDecimals: collateralDecimals, // Use dynamically fetched decimals
+        programId: PROGRAM_ID
+      });
+
+      console.log('📦 Instruction built successfully');
+
+      // Create and send transaction
+      console.log('📤 Creating and sending transaction...');
+      const transaction = new Transaction();
+      
+      // Add compute budget instruction to handle complex operations
+      const computeBudgetInstruction = ComputeBudgetProgram.setComputeUnitLimit({
+        units: 400_000, // Increase compute units for complex operations
+      });
+      transaction.add(computeBudgetInstruction);
+      transaction.add(instruction);
+      
+      // Get recent blockhash
+      const { blockhash } = await connection.getLatestBlockhash();
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = publicKey;
+
+      console.log('🔐 Transaction details:', {
+        feePayer: transaction.feePayer?.toBase58(),
+        recentBlockhash: transaction.recentBlockhash,
+        instructionCount: transaction.instructions.length
+      });
+
+      // Simulate transaction first to get detailed error information
+      console.log('🧪 Simulating transaction...');
+      try {
+        const simulationResult = await connection.simulateTransaction(transaction);
+        console.log('✅ Simulation result:', simulationResult);
+        
+        if (simulationResult.value.err) {
+          console.error('❌ Simulation failed:', simulationResult.value.err);
+          console.error('📋 Simulation logs:', simulationResult.value.logs);
+          throw new Error(`Transaction simulation failed: ${JSON.stringify(simulationResult.value.err)}`);
+        }
+        
+        console.log('✅ Simulation successful, proceeding with transaction...');
+        console.log('📋 Simulation logs:', simulationResult.value.logs);
+      } catch (simError) {
+        console.error('❌ Simulation error:', simError);
+        throw simError;
+      }
+
+      const signature = await sendTransaction(transaction, connection);
+      
+      console.log('✅ Transaction sent successfully!');
+      console.log('📝 Transaction signature:', signature);
+      console.log('🔍 View on explorer:', `https://explorer.solana.com/tx/${signature}?cluster=devnet`);
+      
+      // Wait for confirmation
+      console.log('⏳ Waiting for transaction confirmation...');
+      const confirmation = await connection.confirmTransaction(signature, 'confirmed');
+      
+      if (confirmation.value.err) {
+        throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+      }
+      
+      console.log('🎉 Transaction confirmed successfully!');
+      setTransactionError(null);
+      
+    } catch (error) {
+      console.error('❌ Transaction failed with detailed error:', error);
+      
+      // Enhanced error logging
+      if (error instanceof Error) {
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      }
+      
+      // Check if it's a wallet error
+      if (error && typeof error === 'object' && 'message' in error) {
+        console.error('Wallet error details:', error);
+      }
+      
+      setTransactionError(error instanceof Error ? error.message : 'Transaction failed');
+    } finally {
+      setIsTransacting(false);
+    }
+  };
+
+  const handleRedeemCollateral = async () => {
+    if (!publicKey || !connected) {
+      setTransactionError('Please connect your wallet first');
+      return;
+    }
+
+    try {
+      setIsTransacting(true);
+      setTransactionError(null);
+
+      const collateralAmount = parseFloat(spyWithdrawAmount);
+      const usdrwBurnAmount = parseFloat(usdrwRepayAmount);
+
+      if (isNaN(collateralAmount) || collateralAmount <= 0) {
+        throw new Error('Invalid collateral amount');
+      }
+      if (isNaN(usdrwBurnAmount) || usdrwBurnAmount <= 0) {
+        throw new Error('Invalid USDrw burn amount');
+      }
+
+      // Find PDAs
+      const [protocolConfigPda] = findProtocolConfigPda(PROGRAM_ID);
+      const [userVaultPda] = findUserVaultPda(publicKey, protocolConfigPda, PROGRAM_ID);
+      const [protocolCollateralAccountPda] = findProtocolCollateralAccountPda(protocolConfigPda, PROGRAM_ID);
+
+      // Derive Associated Token Accounts
+      const userCollateralAccount = await getAssociatedTokenAddress(
+        COLLATERAL_MINT,
+        publicKey
+      );
+      
+      const userUsdrwAccount = await getAssociatedTokenAddress(
+        USDRW_MINT,
+        publicKey
+      );
+
+      // Build instruction with proper token accounts
+      const instruction = buildRedeemCollateralInstruction({
+        user: publicKey,
+        protocolConfig: protocolConfigPda,
+        userVault: userVaultPda,
+        userCollateralAccount: userCollateralAccount,
+        protocolCollateralAccount: protocolCollateralAccountPda,
+        userUsdrwAccount: userUsdrwAccount,
+        usdrwMint: USDRW_MINT,
+        amount: usdrwBurnAmount,
+        amountDecimals: 6, // USDrw decimals
+        programId: PROGRAM_ID
+      });
+
+      // Create and send transaction
+      const transaction = new Transaction().add(instruction);
+      const signature = await sendTransaction(transaction, connection);
+      
+      console.log('Transaction sent:', signature);
+      // TODO: Add confirmation waiting and success feedback
+      
+    } catch (error) {
+      console.error('Transaction failed:', error);
+      setTransactionError(error instanceof Error ? error.message : 'Transaction failed');
+    } finally {
+      setIsTransacting(false);
+    }
+  };
+
+  const handleDepositMoreCollateral = async () => {
+    if (!publicKey || !sendTransaction) return;
+    
+    try {
+      setIsTransacting(true);
+      setTransactionError(null);
+
+      // TODO: Get deposit amount from input field
+      const depositAmount = 1; // Placeholder - should come from input
+
+      if (isNaN(depositAmount) || depositAmount <= 0) {
+        throw new Error('Invalid deposit amount');
+      }
+
+      // Find PDAs
+      const [protocolConfigPda] = findProtocolConfigPda(PROGRAM_ID);
+      const [userVaultPda] = findUserVaultPda(publicKey, protocolConfigPda, PROGRAM_ID);
+
+      // TODO: Build deposit instruction when available
+      console.log('Deposit more collateral:', { depositAmount, userVaultPda });
+      
+      // Placeholder for now
+      throw new Error('Deposit more collateral functionality coming soon');
+      
+    } catch (error) {
+      console.error('Deposit failed:', error);
+      setTransactionError(error instanceof Error ? error.message : 'Deposit failed');
+    } finally {
+      setIsTransacting(false);
+    }
+  };
+
+  const handleRepayDebt = async () => {
+    if (!publicKey || !sendTransaction) return;
+    
+    try {
+      setIsTransacting(true);
+      setTransactionError(null);
+
+      const repayAmount = parseFloat(usdrwRepayAmount);
+
+      if (isNaN(repayAmount) || repayAmount <= 0) {
+        throw new Error('Invalid repay amount');
+      }
+
+      // Find PDAs
+      const [protocolConfigPda] = findProtocolConfigPda(PROGRAM_ID);
+      const [userVaultPda] = findUserVaultPda(publicKey, protocolConfigPda, PROGRAM_ID);
+
+      // TODO: Build repay instruction when available
+      console.log('Repay debt:', { repayAmount, userVaultPda });
+      
+      // Placeholder for now
+      throw new Error('Repay debt functionality coming soon');
+      
+    } catch (error) {
+      console.error('Repay failed:', error);
+      setTransactionError(error instanceof Error ? error.message : 'Repay failed');
+    } finally {
+      setIsTransacting(false);
+    }
+  };
+
+  const handleWithdrawCollateral = async () => {
+    if (!publicKey || !sendTransaction) return;
+    
+    try {
+      setIsTransacting(true);
+      setTransactionError(null);
+
+      const withdrawAmount = parseFloat(spyWithdrawAmount);
+
+      if (isNaN(withdrawAmount) || withdrawAmount <= 0) {
+        throw new Error('Invalid withdraw amount');
+      }
+
+      // Find PDAs
+      const [protocolConfigPda] = findProtocolConfigPda(PROGRAM_ID);
+      const [userVaultPda] = findUserVaultPda(publicKey, protocolConfigPda, PROGRAM_ID);
+
+      // TODO: Build withdraw instruction when available
+      console.log('Withdraw collateral:', { withdrawAmount, userVaultPda });
+      
+      // Placeholder for now
+      throw new Error('Withdraw collateral functionality coming soon');
+      
+    } catch (error) {
+      console.error('Withdraw failed:', error);
+      setTransactionError(error instanceof Error ? error.message : 'Withdraw failed');
+    } finally {
+      setIsTransacting(false);
     }
   };
 
@@ -245,18 +590,28 @@ export default function App() {
               </div>
               
               {/* Wallet */}
-              <div className="flex items-center gap-2 px-4 py-2 border border-gray-700 rounded-lg bg-gray-900/50 backdrop-blur-sm">
-                <Wallet className="w-4 h-4 text-indigo-400" />
-                <span className="text-sm text-gray-300">
-                  7f...h9
-                </span>
-              </div>
+              <WalletMultiButton className="!bg-gray-900/50 !border !border-gray-700 !text-gray-300 hover:!bg-gray-800/50 !rounded-lg !px-4 !py-2 !text-sm" />
             </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
+        {/* Transaction Error Display */}
+        {transactionError && (
+          <div className="bg-red-900/20 border border-red-500/50 rounded-lg p-4">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-red-400" />
+              <span className="text-red-400 text-sm">{transactionError}</span>
+              <button 
+                onClick={() => setTransactionError(null)}
+                className="ml-auto text-red-400 hover:text-red-300"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
         {/* Tabbed Interface */}
         <Tabs defaultValue="redemptions-repay" className="w-full" onValueChange={setActiveTab}>
           <TabsList className="w-full bg-gray-900 border border-gray-800 p-1 h-auto grid grid-cols-3 rounded-lg">
@@ -294,7 +649,7 @@ export default function App() {
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="spy-deposit" className="text-sm text-gray-400 mb-2 block">
-                      SPY Shares to Deposit
+                      Mock SPYx to Deposit
                     </Label>
                     <Input
                       id="spy-deposit"
@@ -318,6 +673,36 @@ export default function App() {
                     />
                   </div>
 
+                  {/* LTV Slider */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <Label className="text-sm text-gray-400">
+                        Loan-to-Value Ratio
+                      </Label>
+                      <span className="text-sm text-indigo-400 font-medium">
+                        {ltvRatio}%
+                      </span>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="range"
+                        min="10"
+                        max="80"
+                        value={ltvRatio}
+                        onChange={(e) => setLtvRatio(parseInt(e.target.value))}
+                        className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer slider"
+                        style={{
+                          background: `linear-gradient(to right, #6366f1 0%, #6366f1 ${((ltvRatio - 10) / 70) * 100}%, #374151 ${((ltvRatio - 10) / 70) * 100}%, #374151 100%)`
+                        }}
+                      />
+                      <div className="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>10%</span>
+                        <span>50%</span>
+                        <span>80%</span>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="pt-4 space-y-3 text-sm border-t border-gray-800 mt-6">
                     <div className="flex justify-between text-gray-400">
                       <span>Max LTV:</span>
@@ -336,9 +721,20 @@ export default function App() {
                   </div>
 
                   <Button
-                    className="w-full h-12 mt-6 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-600 border-0 rounded-lg shadow-lg shadow-indigo-500/20 transition-all"
+                    onClick={handleDepositAndMint}
+                    disabled={isTransacting || !connected}
+                    className="w-full h-12 mt-6 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-600 border-0 rounded-lg shadow-lg shadow-indigo-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Deposit & Mint
+                    {isTransacting ? (
+                      <div className="flex items-center gap-2">
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        Processing...
+                      </div>
+                    ) : !connected ? (
+                      'Connect Wallet'
+                    ) : (
+                      'Deposit & Mint'
+                    )}
                   </Button>
                 </div>
               </Card>
@@ -349,49 +745,104 @@ export default function App() {
             <div className="max-w-4xl mx-auto space-y-6">
               {/* Current Position Summary */}
               <Card className="bg-gray-900 border-gray-800 p-4 sm:p-6 rounded-xl shadow-xl">
-                <div className="flex items-center gap-2 mb-6">
-                  <div className="w-1 h-6 bg-teal-500 rounded-full" />
-                  <h3 className="text-lg text-white">
-                    Your Position
-                  </h3>
-                </div>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-6 bg-teal-500 rounded-full" />
+                    <h3 className="text-lg text-white">
+                      Your Position
+                    </h3>
+                    {accountLoading && (
+                       <RefreshCw className="w-4 h-4 text-gray-400 animate-spin" />
+                     )}
+                   </div>
+                   <Button
+                     variant="outline"
+                     size="sm"
+                     onClick={refreshData}
+                     disabled={accountLoading}
+                     className="text-gray-400 border-gray-700 hover:text-white hover:border-gray-600"
+                   >
+                     <RefreshCw className={`w-4 h-4 ${accountLoading ? 'animate-spin' : ''}`} />
+                   </Button>
+                 </div>
+                 
+                 {accountError && (
+                   <div className="mb-4 p-3 bg-red-900/20 border border-red-800 rounded-lg">
+                     <p className="text-red-400 text-sm">
+                       Error loading account data: {accountError}
+                     </p>
+                   </div>
+                 )}
                 
                 <div className={`flex ${rowGapClass} overflow-x-auto py-2 scroll-smooth items-stretch`} id="position-row">
                   <div className="bg-gray-950 p-4 rounded-lg border border-gray-800 w-[280px] flex-shrink-0">
                     <p className="text-xs text-gray-500 mb-1">Collateral</p>
-                    <p className="text-2xl text-indigo-400 font-semibold mb-1">
-                      {parseFloat(spyAmount).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} SPY
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      ${baselineCollateral.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </p>
+                    {!connected ? (
+                      <p className="text-lg text-gray-400 font-medium mb-1">
+                        Connect wallet to see data
+                      </p>
+                    ) : (
+                      <>
+                        <p className="text-2xl text-indigo-400 font-semibold mb-1">
+                          {userVault ? 
+                            (Number(userVault.collateralAmount) / 1e9).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) 
+                            : (spyAmount && parseFloat(spyAmount) ? parseFloat(spyAmount).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '0')
+                          } Mock SPYx
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          ${(collateralValue || (spyAmount && parseFloat(spyAmount) ? parseFloat(spyAmount) * baselineSpyPrice : 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                      </>
+                    )}
                   </div>
                   
                   <div className="bg-gray-950 p-4 rounded-lg border border-gray-800 w-[280px] flex-shrink-0">
                     <p className="text-xs text-gray-500 mb-1">Debt</p>
-                    <p className="text-2xl text-teal-400 font-semibold mb-1">
-                      {parseFloat(usdrwAmount).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} USDrw
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      ${(parseFloat(usdrwAmount) * usdrwPegPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </p>
+                    {!connected ? (
+                      <p className="text-lg text-gray-400 font-medium mb-1">
+                        Connect wallet to see data
+                      </p>
+                    ) : (
+                      <>
+                        <p className="text-2xl text-teal-400 font-semibold mb-1">
+                          {userVault ? 
+                            (Number(userVault.debtAmount) / 1e6).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) 
+                            : (usdrwAmount && parseFloat(usdrwAmount) ? parseFloat(usdrwAmount).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '0')
+                          } USDrw
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          ${(debtValue || (usdrwAmount && parseFloat(usdrwAmount) ? parseFloat(usdrwAmount) * usdrwPegPrice : 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                      </>
+                    )}
                   </div>
                   
                   <div className="bg-gray-950 p-4 rounded-lg border border-gray-800 w-[280px] flex-shrink-0">
                     <p className="text-xs text-gray-500 mb-1">Health Ratio</p>
-                    <p className="text-2xl font-semibold mb-1" style={{ color: status.color }}>
-                      {displayedCollateralizationRatio.toFixed(0)}%
-                    </p>
-                    <Badge 
-                      variant="outline" 
-                      className="text-xs"
-                      style={{ 
-                        borderColor: status.color,
-                        color: status.color
-                      }}
-                    >
-                      {status.label}
-                    </Badge>
+                    {!connected ? (
+                      <p className="text-lg text-gray-400 font-medium mb-1">
+                        Connect wallet to see data
+                      </p>
+                    ) : (
+                      <>
+                        <p className="text-2xl font-semibold mb-1" style={{ color: status.color }}>
+                          {healthRatio ? 
+                            (healthRatio * 100).toFixed(0) 
+                            : displayedCollateralizationRatio.toFixed(0)
+                          }%
+                        </p>
+                        <Badge 
+                          variant="outline" 
+                          className="text-xs"
+                          style={{ 
+                            borderColor: status.color,
+                            color: status.color
+                          }}
+                        >
+                          {isLiquidatable ? 'At Risk' : status.label}
+                        </Badge>
+                      </>
+                    )}
                   </div>
                 </div>
               </Card>
@@ -410,7 +861,7 @@ export default function App() {
                   <div className="space-y-3">
                     <div>
                       <Label htmlFor="spy-deposit-more" className="text-xs text-gray-400 mb-2 block">
-                        SPY Shares
+                        Mock SPYx
                       </Label>
                       <Input
                         id="spy-deposit-more"
@@ -421,9 +872,20 @@ export default function App() {
                     </div>
                     
                     <Button
-                      className="w-full h-10 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/40 hover:border-indigo-500/60 text-indigo-400 rounded-lg transition-all"
+                      onClick={handleDepositMoreCollateral}
+                      disabled={isTransacting || !connected}
+                      className="w-full h-10 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/40 hover:border-indigo-500/60 text-indigo-400 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Deposit
+                      {isTransacting ? (
+                        <div className="flex items-center gap-2">
+                          <RefreshCw className="w-3 h-3 animate-spin" />
+                          Processing...
+                        </div>
+                      ) : !connected ? (
+                        'Connect Wallet'
+                      ) : (
+                        'Deposit'
+                      )}
                     </Button>
                   </div>
                 </Card>
@@ -453,9 +915,20 @@ export default function App() {
                     </div>
                     
                     <Button
-                      className="w-full h-10 bg-teal-500/20 hover:bg-teal-500/30 border border-teal-500/40 hover:border-teal-500/60 text-teal-400 rounded-lg transition-all"
+                      onClick={handleRepayDebt}
+                      disabled={isTransacting || !connected}
+                      className="w-full h-10 bg-teal-500/20 hover:bg-teal-500/30 border border-teal-500/40 hover:border-teal-500/60 text-teal-400 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Repay
+                      {isTransacting ? (
+                        <div className="flex items-center gap-2">
+                          <RefreshCw className="w-3 h-3 animate-spin" />
+                          Processing...
+                        </div>
+                      ) : !connected ? (
+                        'Connect Wallet'
+                      ) : (
+                        'Repay'
+                      )}
                     </Button>
                   </div>
                 </Card>
@@ -472,7 +945,7 @@ export default function App() {
                   <div className="space-y-3">
                     <div>
                       <Label htmlFor="spy-withdraw" className="text-xs text-gray-400 mb-2 block">
-                        SPY Shares
+                        Mock SPYx
                       </Label>
                       <Input
                         id="spy-withdraw"
@@ -485,9 +958,11 @@ export default function App() {
                     </div>
                     
                     <Button
-                      className="w-full h-10 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 hover:border-amber-500/60 text-amber-400 rounded-lg transition-all"
+                      onClick={handleWithdrawCollateral}
+                      disabled={isTransacting || !publicKey}
+                      className="w-full h-10 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 hover:border-amber-500/60 text-amber-400 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Withdraw
+                      {isTransacting ? 'Processing...' : 'Withdraw'}
                     </Button>
                   </div>
                 </Card>
@@ -508,7 +983,7 @@ export default function App() {
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <p className="text-xs text-gray-500">Collateral (SPY)</p>
+                    <p className="text-xs text-gray-500">Collateral (Mock SPYx)</p>
                     <Input
                       type="number"
                       value={spyAmount}
@@ -640,91 +1115,73 @@ export default function App() {
             <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-3xl" />
             <div className="relative z-10">
               <p className="text-sm text-gray-400 mb-2">Collateral Value</p>
-              <div className="text-4xl sm:text-5xl text-indigo-400 font-semibold mb-2">
-                ${displayedCollateral.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <span>{displayedSpyAmount} SPY @ ${displayedSpyPrice.toFixed(2)}</span>
-                {activeTab === 'risk' && effectiveAssetChange !== 0 && (
-                  <Badge 
-                    variant="outline" 
-                    className={`text-xs ${
-                      effectiveAssetChange > 0 
-                        ? 'border-emerald-500/30 text-emerald-400' 
-                        : 'border-red-500/30 text-red-400'
-                    }`}
-                  >
-                    {effectiveAssetChange > 0 ? '+' : ''}{effectiveAssetChange}%
-                  </Badge>
-                )}
-              </div>
+              {!connected ? (
+                <div className="text-2xl sm:text-3xl text-gray-500 font-medium mb-2">
+                  Connect wallet to see data
+                </div>
+              ) : (
+                <>
+                  <div className="text-4xl sm:text-5xl text-indigo-400 font-semibold mb-2">
+                    ${displayedCollateral.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <span>{displayedSpyAmount} Mock SPYx @ ${displayedSpyPrice.toFixed(2)}</span>
+                    {activeTab === 'risk' && effectiveAssetChange !== 0 && (
+                      <Badge 
+                        variant="outline" 
+                        className={`text-xs ${
+                          effectiveAssetChange > 0 
+                            ? 'border-emerald-500/30 text-emerald-400' 
+                            : 'border-red-500/30 text-red-400'
+                        }`}
+                      >
+                        {effectiveAssetChange > 0 ? '+' : ''}{effectiveAssetChange}%
+                      </Badge>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </Card>
 
           {/* Vault Health */}
           <Card 
-            className={`bg-gray-900 p-4 sm:p-6 relative overflow-hidden rounded-xl shadow-lg w-[480px] flex-shrink-0 ${status.borderColor}`}
+            className={`bg-gray-900 p-4 sm:p-6 relative overflow-hidden rounded-xl shadow-lg w-[480px] flex-shrink-0 ${connected ? status.borderColor : 'border-gray-800'}`}
           >
             <div 
-              className={`absolute top-0 right-0 w-32 h-32 ${status.bgColor} rounded-full blur-3xl`}
+              className={`absolute top-0 right-0 w-32 h-32 ${connected ? status.bgColor : 'bg-gray-500/5'} rounded-full blur-3xl`}
             />
             <div className="relative z-10">
               <p className="text-sm text-gray-400 mb-2">Vault Health (CR)</p>
-              <div 
-                className="text-4xl sm:text-5xl font-semibold mb-2"
-                style={{ color: status.color }}
-              >
-                {displayedCollateralizationRatio.toFixed(2)}%
-              </div>
-              <Badge 
-                variant="outline" 
-                className="text-xs"
-                style={{ 
-                  borderColor: status.color,
-                  color: status.color
-                }}
-              >
-                {status.label}
-              </Badge>
+              {!connected ? (
+                <div className="text-2xl sm:text-3xl text-gray-500 font-medium mb-2">
+                  Connect wallet to see data
+                </div>
+              ) : (
+                <>
+                  <div 
+                    className="text-4xl sm:text-5xl font-semibold mb-2"
+                    style={{ color: status.color }}
+                  >
+                    {displayedCollateralizationRatio.toFixed(2)}%
+                  </div>
+                  <Badge 
+                    variant="outline" 
+                    className="text-xs"
+                    style={{ 
+                      borderColor: status.color,
+                      color: status.color
+                    }}
+                  >
+                    {status.label}
+                  </Badge>
+                </>
+              )}
             </div>
           </Card>
         </div>
 
-        {/* Visual Spacing Tests */}
-        <Card className="bg-gray-900 border-gray-800 p-4 sm:p-5 rounded-xl shadow-lg mt-6">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-1 h-6 bg-teal-500 rounded-full" />
-            <h3 className="text-lg text-white">Spacing Tests</h3>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Badge variant="outline" className={spacingCheck.initial ? 'text-emerald-400 border-emerald-500/30' : 'text-red-400 border-red-500/30'}>
-              Initial {spacingCheck.initial ? 'PASS' : 'FAIL'}
-            </Badge>
-            <Badge variant="outline" className={spacingCheck.resize ? 'text-emerald-400 border-emerald-500/30' : 'text-red-400 border-red-500/30'}>
-              Resize {spacingCheck.resize ? 'PASS' : 'FAIL'}
-            </Badge>
-            <Badge variant="outline" className={spacingCheck.dynamic ? 'text-emerald-400 border-emerald-500/30' : 'text-red-400 border-red-500/30'}>
-              Dynamic {spacingCheck.dynamic ? 'PASS' : 'FAIL'}
-            </Badge>
-          </div>
-          <p className="text-xs text-gray-400 mt-2">{spacingCheck.details.join(' • ')}</p>
-          <div className="flex gap-2 mt-4">
-            <Button onClick={() => setTestCards(prev => [...prev, Date.now()])}>
-              Add Test Card
-            </Button>
-            <Button variant="outline" onClick={() => setTestCards(prev => prev.length ? prev.slice(0, -1) : prev)}>
-              Remove Test Card
-            </Button>
-          </div>
-          <div id="test-row" className={`flex ${rowGapClass} overflow-x-auto py-2 scroll-smooth items-stretch mt-4`}>
-            {testCards.map((key) => (
-              <Card key={key} className="bg-gray-950 p-4 rounded-lg border border-gray-800 w-[320px] flex-shrink-0">
-                <p className="text-sm text-gray-400 mb-1">Test Card</p>
-                <p className="text-xs text-gray-500">ID: {key}</p>
-              </Card>
-            ))}
-          </div>
-        </Card>
+
       </div>
     </div>
   );

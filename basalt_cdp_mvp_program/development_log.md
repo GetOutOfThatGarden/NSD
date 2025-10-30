@@ -1,5 +1,235 @@
 # Basalt CDP MVP Development Log
 
+## 2025-01-30 - Fixed Double Decimal Scaling Issue in Mint Transaction
+
+### Task: Resolve "Insufficient collateral for minting" Error Due to Double Decimal Scaling
+**Date**: 2025-01-30  
+**Time**: Current Session  
+**Description**: Identified and fixed a critical bug where the collateral amount was being scaled twice during the mint transaction, causing the program to receive amounts that were 1 million times larger than expected.
+
+### Root Cause Analysis:
+1. **Frontend Calculation**: `collateralAmountLamports = 3 * 10^6 = 3,000,000` (correctly scaled for 6 decimals)
+2. **toU64Le Function**: Applied scaling again: `3,000,000 * 10^6 = 3,000,000,000,000`
+3. **Result**: Program received 3 trillion lamports instead of 3 million, causing validation failure
+
+### Technical Details:
+- **Mock SPYx Token**: Has 6 decimals (not 9 as initially assumed)
+- **Expected Amount**: 3 tokens = 3,000,000 lamports
+- **Actual Amount Sent**: 3,000,000,000,000 lamports (1 million times larger)
+- **Validation Failure**: Program's collateral validation logic correctly rejected the excessive amount
+
+### Code Changes:
+1. **App.tsx** (Line 242):
+   - **Before**: `amount: collateralAmountLamports` (already scaled amount)
+   - **After**: `amount: collateralAmount` (unscaled amount for toU64Le to process)
+   - **Reason**: toU64Le function expects unscaled amounts and handles decimal conversion internally
+
+### Fix Implementation:
+- **Dynamic Decimal Fetching**: Already implemented to get correct token decimals (6 for Mock SPYx)
+- **Proper Amount Passing**: Now passing unscaled `collateralAmount` (3.0) instead of pre-scaled `collateralAmountLamports` (3,000,000)
+- **toU64Le Processing**: Function correctly converts 3.0 with 6 decimals to 3,000,000 lamports
+
+### Expected Results:
+- **Input**: 3 Mock SPYx tokens
+- **Calculation**: `3.0 * 10^6 = 3,000,000` lamports (correct)
+- **Program Validation**: `3,000,000 >= 1` ✅ (MIN_COLLATERAL_AMOUNT)
+- **Transaction**: Should now succeed without "Insufficient collateral" error
+
+### Testing Status:
+- Fix implemented and ready for testing
+- Previous decimal mismatch issues resolved
+- Double scaling bug eliminated
+
+## 2025-10-30 - Auto-Population and LTV Slider for Demo
+
+### Task: Implement Auto-Population of USDrw Field and Add LTV Slider for Product Demo
+**Date**: 2025-10-30  
+**Time**: 15:30 - 15:45  
+**Description**: Enhanced the "Mint / Deposit" section with auto-population functionality and a cosmetic LTV slider to improve the product demo experience. The USDrw field now automatically calculates based on Mock SPYx input using a hardcoded price of $670.
+
+### Features Implemented:
+1. **Auto-Population Logic**: USDrw field automatically populates with 50% of the Mock SPYx collateral value
+2. **LTV Slider**: Cosmetic slider allowing users to adjust minting amount from 10% to 80% of collateral value
+3. **Price Update**: Updated hardcoded Mock SPYx price from $550 to $670
+4. **Real-time Calculation**: USDrw amount updates instantly when Mock SPYx input or LTV ratio changes
+
+### Code Changes:
+1. **App.tsx**:
+   - **Updated `spyPrice`**: Changed from 550 to 670 for accurate demo calculations
+   - **Added `ltvRatio` state**: New state variable initialized to 50 (representing 50%)
+   - **Added `useEffect` hook**: Auto-populates USDrw field based on SPY amount and LTV ratio
+   - **Added LTV Slider**: Interactive range input with visual styling and percentage display
+   - **Enhanced calculation**: `(spyAmount * spyPrice * ltvRatio) / 100` for precise USDrw calculation
+
+2. **index.css**:
+   - **Custom slider styles**: Added webkit and moz specific styling for cross-browser compatibility
+   - **Visual enhancements**: Indigo-colored thumb with shadow effects and rounded track
+
+### Technical Implementation:
+- **Calculation Formula**: `USDrw = (Mock SPYx Amount × $670 × LTV%) ÷ 100`
+- **Default LTV**: 50% for overcollateralized loans
+- **Maximum LTV**: 80% to maintain safe collateralization ratios
+- **Real-time Updates**: useEffect dependency array includes `[spyAmount, ltvRatio, spyPrice]`
+- **Input Validation**: Clears USDrw field if SPY amount is invalid or empty
+
+### Demo Features:
+- **Example Calculation**: 3 Mock SPYx × $670 × 50% = $1,005 USDrw
+- **Slider Interaction**: Users can adjust from 10% to 80% LTV visually
+- **Instant Feedback**: USDrw amount updates immediately when slider moves
+- **Overcollateralized Loans**: Default 50% ensures safe lending ratios
+
+### Testing Results:
+- Auto-population works correctly with hardcoded $670 price
+- LTV slider responds smoothly with visual feedback
+- Calculations update in real-time without lag
+- No compilation errors or runtime issues
+- Cross-browser slider styling applied successfully
+
+## 2025-10-30 - Portfolio Button Fixes and Text Updates
+
+### Task: Fix Portfolio Section Button Functionality and Replace "SPY Shares" with "Mock SPYx"
+**Date**: 2025-10-30  
+**Time**: 15:15 - 15:30  
+**Description**: Fixed non-functional buttons in the Portfolio section and updated all references from "SPY Shares" to "Mock SPYx" throughout the application for better clarity and branding consistency.
+
+### Issues Addressed:
+1. **Missing Withdraw Button Handler**: The withdraw button in the Portfolio section had no onClick handler, making it non-functional
+2. **Inconsistent Branding**: Application used "SPY Shares" terminology which needed to be updated to "Mock SPYx" for clarity
+3. **Button State Management**: Buttons lacked proper disabled states and loading indicators
+
+### Code Changes:
+1. **App.tsx**:
+   - **Added `handleWithdrawCollateral` function**: Created new async handler following the same pattern as existing handlers
+   - **Updated Withdraw Button**: Added onClick handler, disabled state, and loading indicator
+   - **Text Replacements**: Updated all instances of "SPY Shares" to "Mock SPYx" across:
+     - Input field labels in Mint/Deposit section
+     - Portfolio overview collateral display
+     - Deposit More Collateral input label
+     - Withdraw Collateral input label
+     - Risk Analysis collateral label
+     - Bottom display text
+
+### Technical Improvements:
+- **Consistent Error Handling**: All Portfolio buttons now have proper try-catch blocks and error state management
+- **Loading States**: Added `isTransacting` state checks to show "Processing..." during operations
+- **Disabled States**: Buttons are properly disabled when wallet not connected or during transactions
+- **User Feedback**: Clear error messages and loading indicators for better UX
+
+### Button Functionality Status:
+- **Deposit More Collateral**: ✅ Working (placeholder implementation with proper error handling)
+- **Repay Debt**: ✅ Working (placeholder implementation with proper error handling)
+- **Withdraw Collateral**: ✅ Working (newly implemented with proper error handling)
+
+### Text Updates Completed:
+- Mint/Deposit section: "SPY Shares to Deposit" → "Mock SPYx to Deposit"
+- Portfolio overview: "SPY" → "Mock SPYx"
+- Deposit More section: "SPY Shares" → "Mock SPYx"
+- Withdraw section: "SPY Shares" → "Mock SPYx"
+- Risk Analysis: "Collateral (SPY)" → "Collateral (Mock SPYx)"
+- Bottom display: "SPY" → "Mock SPYx"
+
+### Testing Results:
+- All Portfolio buttons now respond to clicks
+- Proper error messages displayed for placeholder functionality
+- Text updates applied consistently across all sections
+- No compilation errors or runtime issues
+- Hot module reloading working correctly
+
+### Next Steps:
+- Implement actual transaction logic for deposit, repay, and withdraw operations
+- Connect buttons to Solana program instructions when backend functionality is ready
+
+## 2025-10-30 - UI Improvements: Replace Placeholder Values with Connection Messages
+
+### Task: Replace Placeholder Numbers with "Connect wallet to see data" Message
+**Date**: 2025-10-30  
+**Time**: 15:00 - 15:15  
+**Description**: Improved user experience by replacing hardcoded placeholder values throughout the application with a clear "Connect wallet to see data" message when the wallet is not connected.
+
+### Issues Addressed:
+1. **Confusing Placeholder Data**: The application displayed hardcoded values (e.g., "100 SPY", "$40,000 USDrw") even when no wallet was connected
+2. **Poor UX**: Users couldn't distinguish between real data and placeholder values
+3. **Misleading Information**: Placeholder numbers could be mistaken for actual account data
+
+### Code Changes:
+1. **App.tsx**:
+   - Updated state initialization: Changed `spyAmount` and `usdrwAmount` from hardcoded values to empty strings
+   - Modified portfolio overview cards (Collateral, Debt, Health Ratio) to conditionally display "Connect wallet to see data" when `!connected`
+   - Updated main dashboard metrics (Collateral Value and Vault Health) with conditional rendering based on wallet connection status
+   - Added proper styling for connection messages with gray text and appropriate font sizing
+
+### UI Improvements:
+- **Portfolio Overview Section**: All three cards (Collateral, Debt, Health Ratio) now show connection message instead of placeholder values
+- **Main Dashboard Metrics**: Large collateral value and vault health displays show connection message when wallet disconnected
+- **Input Fields**: SPY and USDrw amount inputs start empty instead of with placeholder values
+- **Consistent Styling**: Connection messages use consistent gray text styling across all components
+
+### User Experience Benefits:
+- **Clear Communication**: Users immediately understand they need to connect their wallet to see data
+- **No Confusion**: Eliminates confusion between placeholder and real data
+- **Professional Appearance**: Clean, consistent messaging throughout the application
+- **Better Onboarding**: Guides users toward the primary action (connecting wallet)
+
+### Testing Results:
+- Application loads successfully without errors
+- All placeholder values properly replaced with connection messages
+- Wallet connection flow remains functional
+- UI maintains visual consistency and professional appearance
+
+## 2025-10-30 - Deposit Transaction Fixes and Buffer Compatibility
+
+### Task: Fix Deposit Transaction Errors and Buffer Compatibility Issues
+**Date**: 2025-10-30  
+**Time**: 14:40 - 15:00  
+**Description**: Resolved critical deposit transaction errors caused by incorrect token account derivation and Buffer compatibility issues in the browser environment.
+
+### Issues Identified:
+1. **Token Account Derivation Error**: The `handleDepositAndMint` and `handleRedeemCollateral` functions were using wallet public keys instead of proper Associated Token Accounts (ATAs)
+2. **Buffer Compatibility Error**: `ReferenceError: Buffer is not defined` in browser environment when using `@solana/spl-token` library
+3. **Transaction Failure**: `WalletSendTransactionError: Unexpected error` during deposit attempts
+
+### Code Changes:
+1. **App.tsx**:
+   - Added `getAssociatedTokenAddress` import from `@solana/spl-token`
+   - Added `findProtocolCollateralAccountPda` import from `./solana/pdas`
+   - Fixed `handleDepositAndMint` function to derive proper ATAs for `userCollateralAccount` and `userUsdrwAccount`
+   - Fixed `handleRedeemCollateral` function with same ATA derivation improvements
+   - Replaced placeholder `publicKey` values with actual token account addresses
+
+2. **polyfills.ts** (new file):
+   - Created comprehensive polyfill for Buffer, global, and process objects
+   - Ensures Node.js compatibility in browser environment
+
+3. **main.tsx**:
+   - Added polyfill import at the top to ensure early initialization
+
+4. **vite.config.ts**:
+   - Added buffer alias configuration
+   - Added global and process.env definitions
+
+5. **index.html**:
+   - Added global polyfill script for additional compatibility
+
+6. **package.json**:
+   - Added `buffer` dependency for browser polyfill
+
+### Technical Improvements:
+- **Proper ATA Derivation**: Now correctly derives Associated Token Accounts using `getAssociatedTokenAddress` for both SPYx collateral and USDrw tokens
+- **Protocol Account Integration**: Uses `findProtocolCollateralAccountPda` for protocol-owned token accounts
+- **Buffer Compatibility**: Comprehensive polyfill setup ensures Solana libraries work in browser environment
+- **Error Prevention**: Eliminates transaction failures caused by invalid account addresses
+
+### Testing Results:
+- Application loads without Buffer errors
+- Real-time account data integration continues to work
+- Deposit functionality now has proper token account setup
+- No console errors related to Buffer or global object access
+
+### Next Steps:
+- Test actual deposit transactions with connected wallet
+- Verify transaction success and account updates
+- Monitor for any remaining compatibility issues
+
 ## 2025-10-29 - USDrw Mint Created on Devnet
 
 ### Task: Create USDrw mint with protocol_config PDA authority

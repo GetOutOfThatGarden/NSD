@@ -64,16 +64,28 @@ export function buildMintUsdrwInstruction(params: {
     toU64Le(amount, amountDecimals),
   ]);
 
+  // Account ordering MUST match the Rust program exactly:
+  // 1. user (mut, signer)
+  // 2. protocol_config (mut)  
+  // 3. user_vault (mut)
+  // 4. user_collateral_account (mut)
+  // 5. protocol_collateral_account (mut)
+  // 6. user_usdrw_account (mut)
+  // 7. usdrw_mint (mut)
+  // 8. token_program
+  // 9. system_program
+  // 10. associated_token_program
   const keys = [
     { pubkey: user, isSigner: true, isWritable: true },
-    { pubkey: protocolConfig, isSigner: false, isWritable: false },
+    { pubkey: protocolConfig, isSigner: false, isWritable: true }, // Fixed: should be writable
     { pubkey: userVault, isSigner: false, isWritable: true },
-    { pubkey: userCollateralAccount, isSigner: false, isWritable: false },
+    { pubkey: userCollateralAccount, isSigner: false, isWritable: true }, // Fixed: should be writable
     { pubkey: protocolCollateralAccount, isSigner: false, isWritable: true },
-    { pubkey: userUsdrwAccount, isSigner: false, isWritable: false },
-    { pubkey: usdrwMint, isSigner: false, isWritable: false },
-    { pubkey: new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"), isSigner: false, isWritable: false },
+    { pubkey: userUsdrwAccount, isSigner: false, isWritable: true }, // Fixed: should be writable
+    { pubkey: usdrwMint, isSigner: false, isWritable: true }, // Fixed: should be writable
+    { pubkey: new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"), isSigner: false, isWritable: false }, // TOKEN_PROGRAM_ID
     { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+    { pubkey: new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"), isSigner: false, isWritable: false }, // ASSOCIATED_TOKEN_PROGRAM_ID
   ];
 
   return new TransactionInstruction({ keys, programId, data });
