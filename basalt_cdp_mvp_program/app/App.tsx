@@ -5,8 +5,9 @@ import { Input } from './components/ui/input';
 import { Label } from './components/ui/label';
 import { Badge } from './components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
-import { AlertTriangle, TrendingUp, TrendingDown, Wallet, RefreshCw } from 'lucide-react';
+import { AlertTriangle, TrendingUp, TrendingDown, Wallet, RefreshCw, CheckCircle, ExternalLink, X } from 'lucide-react';
 import { BasaltLogo } from './components/BasaltLogo.tsx';
+
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { PublicKey, Transaction, ComputeBudgetProgram } from '@solana/web3.js';
@@ -68,6 +69,19 @@ export default function App() {
   // Transaction state
   const [isTransacting, setIsTransacting] = useState(false);
   const [transactionError, setTransactionError] = useState<string | null>(null);
+  
+  // Success dialog state
+
+  const [successTransactionData, setSuccessTransactionData] = useState<{
+    signature: string;
+    type: 'deposit_mint' | 'redeem_collateral' | 'repay_debt' | 'deposit_more';
+    details: {
+      collateralAmount?: number;
+      usdrwAmount?: number;
+      collateralSymbol?: string;
+      usdrwSymbol?: string;
+    };
+  } | null>(null);
   
   const [activeScenario, setActiveScenario] = useState<Scenario>('baseline');
   const [spyAmount, setSpyAmount] = useState('');
@@ -303,6 +317,18 @@ export default function App() {
       
       console.log('🎉 Transaction confirmed successfully!');
       setTransactionError(null);
+      
+      // Show success dialog
+      setSuccessTransactionData({
+        signature,
+        type: 'deposit_mint',
+        details: {
+          collateralAmount,
+          usdrwAmount: usdrwMintAmount,
+          collateralSymbol: 'SPYx',
+          usdrwSymbol: 'USDrw'
+        }
+      });
       
     } catch (error) {
       console.error('❌ Transaction failed with detailed error:', error);
@@ -736,6 +762,43 @@ export default function App() {
                       'Deposit & Mint'
                     )}
                   </Button>
+
+                  {/* Inline Success Message */}
+                  {successTransactionData && successTransactionData.type === 'deposit_mint' && (
+                    <div className="mt-4 p-4 bg-green-900/40 border-2 border-green-600 rounded-lg shadow-lg backdrop-blur-sm">
+                      <div className="flex items-start gap-3">
+                        <CheckCircle className="w-5 h-5 text-green-300 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                          <h4 className="text-green-200 font-semibold mb-2">Transaction Successful!</h4>
+                          <div className="space-y-1 text-sm text-white">
+                            {successTransactionData.details.collateralAmount && (
+                              <p>Deposited: <span className="font-medium">{successTransactionData.details.collateralAmount} {successTransactionData.details.collateralSymbol}</span></p>
+                            )}
+                            {successTransactionData.details.usdrwAmount && (
+                              <p>Minted: <span className="font-medium">{successTransactionData.details.usdrwAmount} {successTransactionData.details.usdrwSymbol}</span></p>
+                            )}
+                          </div>
+                          <a
+                            href={`https://explorer.solana.com/tx/${successTransactionData.signature}?cluster=devnet`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 mt-3 px-3 py-1 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-500 transition-colors font-medium"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            View on Solana Explorer
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                        <button
+                          onClick={() => setSuccessTransactionData(null)}
+                          className="text-green-300 hover:text-white transition-colors p-1"
+                          aria-label="Close success message"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </Card>
             </div>
@@ -1183,6 +1246,8 @@ export default function App() {
 
 
       </div>
+      
+
     </div>
   );
 }

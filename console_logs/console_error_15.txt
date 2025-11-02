@@ -1,0 +1,94 @@
+injected.js:1 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+injected.js:1 Lit is in dev mode. Not recommended for production! See https://lit.dev/msg/dev-mode for more information.
+console.warn @ injected.js:1
+issueWarning @ chunk-N7WD2QIV.js?v=c8703f00:23
+(anonymous) @ chunk-N7WD2QIV.js?v=c8703f00:28
+injected.js:1 Phantom was registered as a Standard Wallet. The Wallet Adapter for Phantom can be removed from your app.
+console.warn @ injected.js:1
+(anonymous) @ chunk-BXB3YZ6S.js?v=c8703f00:5458
+(anonymous) @ chunk-BXB3YZ6S.js?v=c8703f00:5454
+mountMemo @ chunk-OTCB756S.js?v=c8703f00:12242
+useMemo @ chunk-OTCB756S.js?v=c8703f00:12566
+useMemo @ chunk-BUSDCBXK.js?v=c8703f00:1094
+useStandardWalletAdapters @ chunk-BXB3YZ6S.js?v=c8703f00:5452
+WalletProvider @ chunk-BXB3YZ6S.js?v=c8703f00:5739
+renderWithHooks @ chunk-OTCB756S.js?v=c8703f00:11596
+mountIndeterminateComponent @ chunk-OTCB756S.js?v=c8703f00:14974
+beginWork @ chunk-OTCB756S.js?v=c8703f00:15962
+beginWork$1 @ chunk-OTCB756S.js?v=c8703f00:19806
+performUnitOfWork @ chunk-OTCB756S.js?v=c8703f00:19251
+workLoopSync @ chunk-OTCB756S.js?v=c8703f00:19190
+renderRootSync @ chunk-OTCB756S.js?v=c8703f00:19169
+performConcurrentWorkOnRoot @ chunk-OTCB756S.js?v=c8703f00:18728
+workLoop @ chunk-OTCB756S.js?v=c8703f00:197
+flushWork @ chunk-OTCB756S.js?v=c8703f00:176
+performWorkUntilDeadline @ chunk-OTCB756S.js?v=c8703f00:384
+injected.js:1 Solflare was registered as a Standard Wallet. The Wallet Adapter for Solflare can be removed from your app.
+console.warn @ injected.js:1
+(anonymous) @ chunk-BXB3YZ6S.js?v=c8703f00:5458
+(anonymous) @ chunk-BXB3YZ6S.js?v=c8703f00:5454
+mountMemo @ chunk-OTCB756S.js?v=c8703f00:12242
+useMemo @ chunk-OTCB756S.js?v=c8703f00:12566
+useMemo @ chunk-BUSDCBXK.js?v=c8703f00:1094
+useStandardWalletAdapters @ chunk-BXB3YZ6S.js?v=c8703f00:5452
+WalletProvider @ chunk-BXB3YZ6S.js?v=c8703f00:5739
+renderWithHooks @ chunk-OTCB756S.js?v=c8703f00:11596
+mountIndeterminateComponent @ chunk-OTCB756S.js?v=c8703f00:14974
+beginWork @ chunk-OTCB756S.js?v=c8703f00:15962
+beginWork$1 @ chunk-OTCB756S.js?v=c8703f00:19806
+performUnitOfWork @ chunk-OTCB756S.js?v=c8703f00:19251
+workLoopSync @ chunk-OTCB756S.js?v=c8703f00:19190
+renderRootSync @ chunk-OTCB756S.js?v=c8703f00:19169
+performConcurrentWorkOnRoot @ chunk-OTCB756S.js?v=c8703f00:18728
+workLoop @ chunk-OTCB756S.js?v=c8703f00:197
+flushWork @ chunk-OTCB756S.js?v=c8703f00:176
+performWorkUntilDeadline @ chunk-OTCB756S.js?v=c8703f00:384
+WalletProvider.tsx:26 [WalletAdapter] Error WalletSendTransactionError: Unexpected error
+    at StandardWalletAdapter.sendTransaction (chunk-BXB3YZ6S.js?v=c8703f00:5033:15)
+    at async chunk-BXB3YZ6S.js?v=c8703f00:5645:12
+    at async handleDepositAndMint (App.tsx:181:25)
+(anonymous) @ WalletProvider.tsx:26
+(anonymous) @ chunk-BXB3YZ6S.js?v=c8703f00:5542
+handleError @ chunk-BXB3YZ6S.js?v=c8703f00:5605
+emit @ chunk-FNNC5DYU.js?v=c8703f00:81
+sendTransaction @ chunk-BXB3YZ6S.js?v=c8703f00:5036
+await in sendTransaction
+(anonymous) @ chunk-BXB3YZ6S.js?v=c8703f00:5645
+handleDepositAndMint @ App.tsx:181
+await in handleDepositAndMint
+callCallback2 @ chunk-OTCB756S.js?v=c8703f00:3680
+invokeGuardedCallbackDev @ chunk-OTCB756S.js?v=c8703f00:3705
+invokeGuardedCallback @ chunk-OTCB756S.js?v=c8703f00:3739
+invokeGuardedCallbackAndCatchFirstError @ chunk-OTCB756S.js?v=c8703f00:3742
+executeDispatch @ chunk-OTCB756S.js?v=c8703f00:7046
+processDispatchQueueItemsInOrder @ chunk-OTCB756S.js?v=c8703f00:7066
+processDispatchQueue @ chunk-OTCB756S.js?v=c8703f00:7075
+dispatchEventsForPlugins @ chunk-OTCB756S.js?v=c8703f00:7083
+(anonymous) @ chunk-OTCB756S.js?v=c8703f00:7206
+batchedUpdates$1 @ chunk-OTCB756S.js?v=c8703f00:18966
+batchedUpdates @ chunk-OTCB756S.js?v=c8703f00:3585
+dispatchEventForPluginEventSystem @ chunk-OTCB756S.js?v=c8703f00:7205
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-OTCB756S.js?v=c8703f00:5484
+dispatchEvent @ chunk-OTCB756S.js?v=c8703f00:5478
+dispatchDiscreteEvent @ chunk-OTCB756S.js?v=c8703f00:5455
+App.tsx:187 Transaction failed: WalletSendTransactionError: Unexpected error
+    at StandardWalletAdapter.sendTransaction (chunk-BXB3YZ6S.js?v=c8703f00:5033:15)
+    at async chunk-BXB3YZ6S.js?v=c8703f00:5645:12
+    at async handleDepositAndMint (App.tsx:181:25)
+handleDepositAndMint @ App.tsx:187
+await in handleDepositAndMint
+callCallback2 @ chunk-OTCB756S.js?v=c8703f00:3680
+invokeGuardedCallbackDev @ chunk-OTCB756S.js?v=c8703f00:3705
+invokeGuardedCallback @ chunk-OTCB756S.js?v=c8703f00:3739
+invokeGuardedCallbackAndCatchFirstError @ chunk-OTCB756S.js?v=c8703f00:3742
+executeDispatch @ chunk-OTCB756S.js?v=c8703f00:7046
+processDispatchQueueItemsInOrder @ chunk-OTCB756S.js?v=c8703f00:7066
+processDispatchQueue @ chunk-OTCB756S.js?v=c8703f00:7075
+dispatchEventsForPlugins @ chunk-OTCB756S.js?v=c8703f00:7083
+(anonymous) @ chunk-OTCB756S.js?v=c8703f00:7206
+batchedUpdates$1 @ chunk-OTCB756S.js?v=c8703f00:18966
+batchedUpdates @ chunk-OTCB756S.js?v=c8703f00:3585
+dispatchEventForPluginEventSystem @ chunk-OTCB756S.js?v=c8703f00:7205
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-OTCB756S.js?v=c8703f00:5484
+dispatchEvent @ chunk-OTCB756S.js?v=c8703f00:5478
+dispatchDiscreteEvent @ chunk-OTCB756S.js?v=c8703f00:5455
