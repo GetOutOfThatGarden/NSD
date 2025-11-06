@@ -277,3 +277,9 @@ basalt_cdp_mvp_program/
 5. **Frontend Integration**: Solana client in `app/solana/`
 6. **User Interface**: React components in `app/components/`
 7. **Testing**: Integration tests in `tests/`
+
+
+### Team
+David McGovern
+Niall Haarington
+Robert Leahy
