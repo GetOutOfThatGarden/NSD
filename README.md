@@ -280,6 +280,6 @@ basalt_cdp_mvp_program/
 
 
 ### Team
-David McGovern
-Niall Haarington
-Robert Leahy
+- **David McGovern**
+- **Niall Haarington**
+- **Robert Leahy**
