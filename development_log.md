@@ -1,5 +1,31 @@
 # Development Log
 
+## 2025-11-07 17:34:47 +04 — Repository Commit
+
+- Task: Git add all, commit, and push on branch `Basalt3.0`
+- Description: Staged all pending changes, updated development log per policy, committed, and pushed.
+
+### Relevant Changes
+- Modified `.DS_Store`
+- Deleted `basalt_cdp_mvp_program/.react-router/types/+future.ts`
+- Deleted `basalt_cdp_mvp_program/.react-router/types/+routes.ts`
+- Deleted `basalt_cdp_mvp_program/.react-router/types/+server-build.d.ts`
+- Deleted `basalt_cdp_mvp_program/.react-router/types/app/+types/root.ts`
+- Deleted `basalt_cdp_mvp_program/.react-router/types/app/routes/+types/docs.ts`
+- Deleted `basalt_cdp_mvp_program/.react-router/types/app/routes/+types/home.ts`
+- Deleted `basalt_cdp_mvp_program/.react-router/types/app/solana/+types/SolanaProvider.ts`
+- Modified `basalt_cdp_mvp_program/app/components/ui/chart.tsx`
+- Modified `basalt_cdp_mvp_program/app/components/ui/drawer.tsx`
+- Modified `basalt_cdp_mvp_program/app/components/ui/sonner.tsx`
+- Deleted `basalt_cdp_mvp_program/react-router.config.ts`
+- Modified `development_log.md`
+
+### Issues or Challenges
+- None encountered prior to commit.
+
+### Solutions Implemented
+- Updated the development log before committing, including a concise summary of changes and branch info, in alignment with the commit policy.
+
 ## 2025-01-28 — Real-time Account Data Integration
 
 - **Task**: Integrate real-time Solana account data into the Basalt CDP frontend
@@ -1332,3 +1358,73 @@ Derived dedicated PDAs to serve as mint authorities for the mock SPYx collateral
 ### Notes:
 - Consider aligning `anchor-bankrun` version or removing it if unused to avoid future peer conflicts.
 - Future cleanup could remove remaining version-suffixed aliases if we standardize dependency versions.
+
+## 2025-11-07 — Frontend Stack Audit Across Projects
+
+**Date**: 2025-11-07  
+**Time**: Current Session  
+**Description**: Cataloged active and deprecated frontend technologies across `basalt_cdp_mvp_program`, `Basalt Vault Dashboard Design`, and `Basalt_FE_tech_demo`, including versions, implementation details, usage counts, and transition rationale.
+
+### Projects Reviewed
+- `basalt_cdp_mvp_program`: React `^18.3.1`, Vite `^6.3.5`, `@vitejs/plugin-react-swc` `^3.10.2`. Heavy Radix UI usage via version-pinned aliases, `lucide-react`, `next-themes`, `recharts`, `sonner`, `vaul`, `class-variance-authority`. Solana libs: `@coral-xyz/anchor ^0.32.1`, `@solana/web3.js ^1.78.0`, wallet adapters `@solana/wallet-adapter-*` pinned to older minors. Tailwind packages present (`tailwindcss`, `postcss`, `autoprefixer`) but no `@tailwind` directives found; Tailwind likely under-configured.
+- `Basalt Vault Dashboard Design`: React `^18.3.1`, Vite `6.3.5`, `@vitejs/plugin-react-swc`. Radix UI components with alias-pinned versions; broader UI tooling (`react-hook-form`, `react-day-picker`, `react-resizable-panels`, `input-otp`, `cmdk`, `embla-carousel-react`, `recharts`, `sonner`, `vaul`). Appears as a UI prototyping/design bundle rather than production app.
+- `Basalt_FE_tech_demo`: React `^19.1.1`, Vite `^7.1.7`, `@vitejs/plugin-react` `^5.0.4`. Minimal UI stack, modern TypeScript `~5.9.3`, updated Solana libs (`@solana/web3.js ^1.98.4`, wallet adapters newer than main app). Used for experimenting with newer React/Vite.
+
+### Implementation Details Observed
+- Version-pinned import aliases (e.g., `@radix-ui/react-accordion@1.2.3`) enforced via Vite `resolve.alias` in two projects to ensure consistent bundling.
+- React Router artifacts (`react-router.config.ts`, `.react-router/types`) present but `react-router-dom` removed; indicates prior usage and now deprecated in main app.
+- Custom Solana wallet provider and PDA utilities integrated in `basalt_cdp_mvp_program`.
+
+### Usage Statistics (approximate)
+- Radix UI imports: ~30 component files in `basalt_cdp_mvp_program`; ~30 in `Basalt Vault Dashboard Design`.
+- `lucide-react`: ~16 imports in `basalt_cdp_mvp_program`; ~18 in `Basalt Vault Dashboard Design`.
+- Single-module usages: `sonner` (toaster), `recharts` (charts), `vaul` (drawer) each present in dedicated UI wrappers.
+
+### Deprecated or Removed (main app)
+- Removed per prior cleanup: `cmdk`, `embla-carousel-react`, `input-otp`, `react-day-picker`, `react-hook-form`, `react-resizable-panels`, `react-router-dom`, `swr` (not referenced in code anymore).
+- Legacy React Router configuration remains in the repo but is not used.
+
+### Issues/Challenges
+- Mixed React/Vite versions across projects (React 18 vs 19; Vite 6 vs 7).
+- Alias-pinned imports increase upgrade friction; risk of drift between package.json and code.
+- Tailwind likely under-configured in `basalt_cdp_mvp_program` (no `@tailwind` directives detected).
+- Solana library versions differ across projects (`@solana/web3.js`, wallet adapters), increasing maintenance burden.
+
+### Solutions/Recommendations
+- Define a support matrix: keep `basalt_cdp_mvp_program` on React 18/Vite 6 if required by plugins, and schedule a React 19/Vite 7 migration plan; or unify to React 19/Vite 7 after compatibility checks.
+- Remove `.react-router` artifacts and `react-router.config.ts` if not used.
+- Either wire Tailwind properly (add `@tailwind base; @tailwind components; @tailwind utilities` and ensure `tailwind.config.js` content paths include project directories) or remove Tailwind packages to avoid confusion.
+- Standardize Solana library versions (wallet adapters and `@solana/web3.js`) across projects to reduce integration inconsistencies.
+- Consider phasing out version-suffixed import aliases in favor of standard semver pinning and lockfiles.
+
+### Code Changes
+- None. This was an audit-only task; recommendations documented for follow-up.
+
+## 2025-11-07 — React Router Cleanup and Alias Simplification
+
+**Date**: 2025-11-07  
+**Time**: Current Session  
+**Description**: Removed legacy React Router artifacts from `basalt_cdp_mvp_program` and simplified select version-suffixed imports to base package names. Verified Tailwind usage and previewed the app.
+
+### Changes
+- Deleted generated router artifacts: `.react-router/` and `react-router.config.ts` (unused after `react-router-dom` removal).
+- Updated imports to base names:
+  - `app/components/ui/sonner.tsx`: `next-themes@0.4.6` → `next-themes`, `sonner@2.0.3` → `sonner`.
+  - `app/components/ui/drawer.tsx`: `vaul@1.1.2` → `vaul`.
+  - `app/components/ui/chart.tsx`: `recharts@2.15.2` → `recharts`.
+- Tailwind verification: `app/index.css` contains compiled Tailwind styles; kept plugin setup unchanged (no `@tailwind` directives needed).
+
+### Issues/Challenges
+- Alias strategy is widely used across UI components (e.g., `lucide-react@0.487.0`); full migration would be multi-file.
+
+### Solutions Implemented
+- Performed targeted alias cleanup on low-risk modules to prove path simplification works without breaking.
+- Kept alias mappings in `vite.config.ts` for broader library set until a systematic refactor.
+
+### Testing/Preview Results
+- Dev server runs at `http://localhost:3000/` (Vite v6.4.1) with no runtime errors observed.
+- UI renders as before; no visual regressions detected.
+
+### Next Steps
+- Plan phased alias cleanup for remaining suffixed imports (start with icons).
+- If Tailwind customization becomes necessary, introduce `@tailwind` directives and local `tailwind.config` inside the project; otherwise consider removing Tailwind dev deps.
