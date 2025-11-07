@@ -1,8 +1,8 @@
 # BASALT CDP Protocol MVP
 
-🚀 **Status**: Security-audited and ready for devnet deployment  
-🔒 **Security**: Comprehensive security audit completed  
-🌐 **Network**: Configured for Solana Devnet  
+**Status**: Security-audited and ready for devnet deployment  
+**Security**: Comprehensive security audit completed  
+**Network**: Configured for Solana Devnet  
 
 ## Project Overview and Purpose
 
@@ -198,7 +198,7 @@ solana program show <PROGRAM_ID> --url devnet
 
 ## Security Audit and Considerations
 
-### Security Audit Status ✅
+### Security Audit Status 
 The protocol has undergone a comprehensive security audit covering:
 
 - **Program Code Security**: All instructions validated for proper access controls
@@ -277,3 +277,9 @@ basalt_cdp_mvp_program/
 5. **Frontend Integration**: Solana client in `app/solana/`
 6. **User Interface**: React components in `app/components/`
 7. **Testing**: Integration tests in `tests/`
+
+
+### Team
+- **David McGovern**
+- **Niall Haarington**
+- **Robert Leahy**
