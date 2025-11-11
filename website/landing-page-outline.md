@@ -4,7 +4,7 @@
 Basalt brings the $124T global equity market on-chain.  
 Deposit tokenized S&P 500 exposure (SPYx) and mint **USDrw**, a stablecoin that lets you **unlock liquidity without selling**.
 
-Stay long. Avoid capital gains events. Keep compounding. on Solana.
+Stay long. Avoid capital gains events. Keep compounding. On Solana.
 
 ---
 
@@ -66,7 +66,6 @@ It is designed for **stability, solvency, and long-term financial sovereignty**.
 
 ## Progress So Far
 
-- **Borrowing + collateral vault logic implemented** (testnet)
 - **Early user demand:** ~**$250k** in initial deposit commitments *(being structured)*
 - **Front-end demo live** — deposit SPYx, mint USDrw, view portfolio & simulate risk
 - **All transactions verifiable via Solana Explorer**
