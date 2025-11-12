@@ -1,5 +1,30 @@
 # Development Log
 
+## 2025-11-12 15:20 UTC — Public-first CoinGecko fallback; no private API key needed
+
+- Description: Fixed persistent `CoinGecko error 400` by switching the SPYX price server to prefer the public CoinGecko API first and only use Pro when explicitly required. This removes dependency on the private API key for normal operation while still supporting Pro keys when public denies access.
+- Changes:
+  - `basalt_cdp_mvp_program/scripts/spyx_price_server.js`:
+    - Requests `https://api.coingecko.com/api/v3` first.
+    - If response indicates Pro-only (`status.error_code 10010`, "Pro API key" message, or 403), retries on `https://pro-api.coingecko.com/api/v3` and includes `x-cg-pro-api-key` only for Pro.
+    - If starting on Pro and response indicates Demo key mismatch (`status.error_code 10011`, mentions "Demo API key" or suggests changing root URL), retries on Public.
+    - Keeps response shape `{ priceUSD, decimals, lastUpdated, source }` and sets `Cache-Control: no-store` and CORS.
+  - Restarted local price server and verified endpoint.
+- Issues/Challenges:
+  - UI showed hardcoded $670 due to API fallback not triggering correctly and domain mismatch errors from CoinGecko.
+  - Some errors used `status.error_code`/`status.error_message` instead of `error_code` at top level; needed robust parsing.
+- Solutions Implemented:
+  - Public-first strategy with error-aware retries to Pro.
+  - Improved error inspection across `error_code`, `status.error_code`, and message strings.
+  - Verified with `curl -i http://localhost:3001/api/spyx-price` returning USDC price and `source: coingecko:public`.
+- Verification:
+  - Dev server running at `http://localhost:3000/`; frontend should fetch live SPYX price in USDC and show a recent "Last updated" timestamp.
+  - Endpoint confirmed returning 200 with price JSON.
+- Notes:
+  - Private API key is not required for standard price fetches; Pro is used only when the public endpoint explicitly denies access.
+  - UI continues to label price as “SPYX Price (USDC)” and no SOL price is displayed.
+
+
 ## 2025-11-07 17:34:47 +04 — Repository Commit
 
 - Task: Git add all, commit, and push on branch `Basalt3.0`
@@ -1428,3 +1453,74 @@ Derived dedicated PDAs to serve as mint authorities for the mock SPYx collateral
 ### Next Steps
 - Plan phased alias cleanup for remaining suffixed imports (start with icons).
 - If Tailwind customization becomes necessary, introduce `@tailwind` directives and local `tailwind.config` inside the project; otherwise consider removing Tailwind dev deps.
+## 2025-11-12 — CoinGecko API Key Setup
+- Description: Stored CoinGecko API key in a `.env` file and ensured it is ignored by Git.
+- Changes:
+  - Added `.env` in repo root with `COINGECKO_API_KEY`.
+  - Created root `.gitignore` and added `.env` to prevent committing secrets.
+- Issues/Challenges: Root `.gitignore` was missing.
+- Solutions: Created `.gitignore`, documented secret handling.
+- Notes:
+  - Do not expose `COINGECKO_API_KEY` in client-side builds; load on server or within scripts using `dotenv`.
+  - For Node scripts: `require('dotenv').config()` then `process.env.COINGECKO_API_KEY`.
+## 2025-11-12 — SPYX Price Fetch Script
+- Description: Added a Node script to fetch SPYX price from CoinGecko using the API key in `.env`.
+- Changes:
+  - Created `scripts/fetch_spyx_price.js` which loads `COINGECKO_API_KEY` and queries CoinGecko for the Solana mint address.
+  - Supports CLI param `--address <mint>` and falls back to `XsoCS1TfEyfFhfvj8EtZ528L3CaKBDBRqRapnBbDF2W`.
+- Issues/Challenges: Avoided external dependencies (`dotenv`) by implementing lightweight `.env` parsing.
+- Solutions: Implemented HTTPS request with header `x-cg-pro-api-key` and fallback to full contract endpoint when simple price is unavailable.
+- Usage:
+  - `node scripts/fetch_spyx_price.js`
+  - `node scripts/fetch_spyx_price.js --address XsoCS1TfEyfFhfvj8EtZ528L3CaKBDBRqRapnBbDF2W`
+## 2025-11-12 14:45 UTC — Implement dynamic SPYX pricing in Basalt CDP app
+
+- Description: Replaced hardcoded `$670` with a real-time pricing system for SPYX that updates on page load/refresh and shows a last-updated timestamp.
+- Changes:
+  - Added backend price server: `basalt_cdp_mvp_program/scripts/spyx_price_server.js` (Node HTTP server)
+  - Configured Vite proxy: `basalt_cdp_mvp_program/vite.config.ts` to route `/api` → `http://localhost:3001`
+  - Implemented client fetch and UI updates: `basalt_cdp_mvp_program/app/App.tsx`
+- Relevant code additions:
+  - Server endpoint: `GET /api/spyx-price?address=<SolanaMint>` returning `{ priceUSD, priceSOL, lastUpdated, symbol, name, decimals }` from CoinGecko.
+  - Frontend: Fetches `/api/spyx-price` with `cache: 'no-store'`, sets `spyPrice`, and renders a timestamp and error message when applicable.
+- Issues/Challenges:
+  - Avoiding exposure of CoinGecko API key to the browser.
+  - Handling CORS between the frontend and local server.
+  - Ensuring data freshness across page refreshes and cache clearing.
+- Solutions:
+  - Implemented a local Node server that reads `COINGECKO_API_KEY` from `.env` (root or parent), applies CORS headers, and serves JSON.
+  - Configured Vite dev proxy for `/api` to the local server to prevent CORS issues.
+  - Used `Cache-Control: no-store` (server) and `fetch({ cache: 'no-store' })` (client) to avoid stale data.
+- Notes:
+  - Default Solana mint: `XsoCS1TfEyfFhfvj8EtZ528L3CaKBDBRqRapnBbDF2W` (SP500 xStock / SPYx).
+  - The UI now indicates loading state (“Updating…”) and displays the last updated time.
+## 2025-11-12 14:55 UTC — Fix CoinGecko Pro endpoint and USDC label
+
+- Description: Resolved frontend price fetch failures by switching the price server to use CoinGecko Pro domain when an API key is present. Updated UI to explicitly label price as USDC.
+- Changes:
+  - `basalt_cdp_mvp_program/scripts/spyx_price_server.js`: selects `https://pro-api.coingecko.com/api/v3` when `COINGECKO_API_KEY` is set; adds `Accept: application/json` header.
+  - `basalt_cdp_mvp_program/app/App.tsx`: label updated to “SPYX Price (USDC)”.
+- Issue: CoinGecko returned 400 with message advising to use Pro API domain when providing a Pro key.
+- Solution: Detect presence of API key and swap base URL to Pro API; restart local price server.
+- Notes: UI continues to show a timestamp and handles error states gracefully; SOL price is not displayed.
+
+## 2025-11-12 15:05 UTC — CoinGecko Pro/Demo domain fallback
+
+- Description: Implemented automatic domain fallback in the SPYX price server to handle Demo API keys on the Pro domain and vice versa.
+- Changes:
+  - `basalt_cdp_mvp_program/scripts/spyx_price_server.js` now:
+    - Prefers Pro (`https://pro-api.coingecko.com/api/v3`) when an API key is present.
+    - If `error_code: 10011` or message mentions "Demo API key" from Pro, retries on Public (`https://api.coingecko.com/api/v3`).
+    - If `error_code: 10010` or message mentions "Pro API key" from Public, retries on Pro.
+    - Keeps headers `Accept: application/json` and `x-cg-pro-api-key` when available.
+  - Response remains `{ priceUSD, decimals, lastUpdated, source }` with `source` indicating domain used.
+- Issues/Challenges:
+  - Frontend received `CoinGecko error 400` advising domain switch for Demo keys.
+  - Needed seamless support without manual environment toggles.
+- Solutions:
+  - Added smart error-aware retry logic based on CoinGecko error codes/messages.
+  - Restarted local price server to apply changes.
+- Verification:
+  - Dev server is running at `http://localhost:3000/`.
+  - Price server logs show listening on `http://localhost:3001`.
+  - Frontend fetch expected to succeed via Vite proxy `/api/spyx-price` with fresh USDC price and timestamp.

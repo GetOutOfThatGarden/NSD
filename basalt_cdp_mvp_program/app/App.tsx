@@ -124,13 +124,19 @@ export default function App() {
       setPriceError(null);
       setPriceLoading(true);
       
-      // TODO: Replace with actual API call through backend proxy
-      // Example implementation:
-      // const response = await fetch('/api/spyx-price');
-      // const data = await response.json();
-      // setSpyPrice(data.price);
-      // setLastUpdated(new Date());
-      
+      const response = await fetch('/api/spyx-price', { cache: 'no-store' });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Price API failed: ${text}`);
+      }
+      const data = await response.json();
+      const price = typeof data.priceUSD === 'number' ? data.priceUSD : (typeof data.usd === 'number' ? data.usd : data.price);
+      if (typeof price === 'number' && !isNaN(price)) {
+        setSpyPrice(price);
+      } else {
+        throw new Error('Invalid price format in API response');
+      }
+      setLastUpdated(data.lastUpdated ? new Date(data.lastUpdated) : new Date());
       setPriceLoading(false);
     } catch (error) {
       console.error('Error fetching SPYX price:', error);
@@ -138,6 +144,11 @@ export default function App() {
       setPriceLoading(false);
     }
   };
+
+  // Fetch price on initial load
+  useEffect(() => {
+    fetchSpyxPrice();
+  }, []);
 
   // Transaction functions
   const handleDepositAndMint = async () => {
@@ -608,10 +619,16 @@ export default function App() {
               <div className="flex items-center gap-2 px-3 py-2 border border-gray-700 rounded-lg bg-gray-900/50 backdrop-blur-sm">
                 <TrendingUp className="w-3 h-3 text-emerald-400" />
                 <div className="flex flex-col">
-                  <span className="text-xs text-gray-500">SPYX Price</span>
+                  <span className="text-xs text-gray-500">SPYX Price (USDC)</span>
                   <span className="text-sm text-teal-400 font-medium">
                     ${spyPrice.toFixed(2)}
                   </span>
+                  <span className="text-[10px] text-gray-500">
+                    {priceLoading ? 'Updating…' : lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}
+                  </span>
+                  {priceError && (
+                    <span className="text-[10px] text-amber-400">{priceError}</span>
+                  )}
                 </div>
               </div>
               

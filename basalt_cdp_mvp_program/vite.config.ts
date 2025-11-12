@@ -13,11 +13,7 @@ import { defineConfig } from 'vite';
       extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
       alias: {
         buffer: 'buffer',
-        'vaul@1.1.2': 'vaul',
-        'sonner@2.0.3': 'sonner',
-        'recharts@2.15.2': 'recharts',
-        'next-themes@0.4.6': 'next-themes',
-        'lucide-react@0.487.0': 'lucide-react',
+        // Version-suffixed aliases removed where base imports are used directly
         'class-variance-authority@0.7.1': 'class-variance-authority',
         '@radix-ui/react-tooltip@1.1.8': '@radix-ui/react-tooltip',
         '@radix-ui/react-toggle@1.1.2': '@radix-ui/react-toggle',
@@ -55,5 +51,12 @@ import { defineConfig } from 'vite';
     server: {
       port: 3000,
       open: true,
+      proxy: {
+        '/api': {
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+          secure: false,
+        },
+      },
     },
   });

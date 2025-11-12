@@ -32,3 +32,5 @@ declare module 'node:path' {
 }
 
 declare var process: any;
+
+// Ambient module declarations to unblock TS while dependencies install
