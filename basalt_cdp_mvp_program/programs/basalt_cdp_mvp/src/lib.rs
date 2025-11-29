@@ -63,4 +63,14 @@ pub mod basalt_cdp_mvp {
     ) -> Result<()> {
         initialize_collateral_vault::initialize_collateral_vault(ctx)
     }
+
+    /// Create USDrw Metaplex metadata via CPI with protocol_config PDA as mint authority
+    pub fn create_usdrw_metadata(
+        ctx: Context<CreateUsdrwMetadata>,
+        name: String,
+        symbol: String,
+        uri: String,
+    ) -> Result<()> {
+        create_usdrw_metadata::create_usdrw_metadata(ctx, name, symbol, uri)
+    }
 }

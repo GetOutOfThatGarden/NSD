@@ -70,4 +70,32 @@
 - Issues:
   - Initial `npm install` failed due to peer dependency resolution error.
 - Solutions:
-  - Used the `--legacy-peer-deps` flag to bypass the peer conflict and complete installation.
+- Used the `--legacy-peer-deps` flag to bypass the peer conflict and complete installation.
+
+## 2025-11-12 11:45
+
+- Task: Add CPI instruction to create USDrw metadata via Metaplex, update program exports and dependencies.
+- Changes:
+  - Added `create_usdrw_metadata.rs` instruction to call `mpl-token-metadata` `create_metadata_accounts_v3` via `invoke_signed`, using `protocol_config` PDA as mint authority and wallet as update authority.
+  - Updated `Cargo.toml` to include `mpl-token-metadata@1.14.0`.
+  - Exported the new instruction in `instructions/mod.rs` and wired a program entrypoint `create_usdrw_metadata` in `src/lib.rs`.
+  - Extended `error.rs` with `InvalidAccount` and `CpiError` variants used by the new instruction.
+- Issues:
+  - Direct client-side creation failed because USDrw mint authority is a PDA, which cannot sign off-chain.
+  - Missing raw Web3 instruction helpers in TS (`createCreateMetadataAccountV3Instruction` not exported) required switching to on-chain CPI.
+- Solutions:
+  - Implemented an on-chain CPI that signs with the `protocol_config` seeds, unblocking metadata creation for USDrw.
+  - Prepared to add a TS script to call the new entrypoint and set name/symbol/uri on devnet.
+## 2025-11-29 15:10 UTC — Adjust dependencies: move `@solana/spl-token` to dependencies
+
+- Task: Ensure runtime imports are correctly placed in `package.json`.
+- Changes:
+  - Moved `@solana/spl-token@^0.4.14` from `devDependencies` to `dependencies` because it is imported by the UI (`app/App.tsx`) and Node scripts.
+- Rationale:
+  - UI imports must be available at runtime; keeping `spl-token` in devDependencies can cause missing module errors on production builds/install.
+- Notes:
+  - Kept `@solana/web3.js` and `@coral-xyz/anchor` as-is.
+  - Did not add `@solana/spl-token-metadata` (we use Metaplex’s `mpl-token-metadata` + Umi).
+  - Did not add `dotenv` since scripts parse `.env` manually; can be added later if desired.
+- Next steps:
+  - Run `npm install` in `basalt_cdp_mvp_program/` and verify `vite build` and `anchor test` continue to pass.

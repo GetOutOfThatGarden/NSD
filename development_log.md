@@ -1,5 +1,24 @@
 # Development Log
 
+## 2025-11-29 15:12 UTC — Commit: Umi metadata refactor and dependency fix
+
+- Task: Prepare commit for metadata script refactor and dependency adjustment; update development log before committing.
+- Description:
+  - Refactored `basalt_cdp_mvp_program/scripts/set-token-metadata.ts` to use Umi builder APIs (`createMetadataAccountV3`, `updateMetadataAccountV2`, `findMetadataPda`) instead of invalid legacy MPL named exports.
+  - Moved `@solana/spl-token@^0.4.14` from `devDependencies` to `dependencies` in `basalt_cdp_mvp_program/package.json` since it’s imported by the UI and scripts.
+- Relevant code changes:
+  - `basalt_cdp_mvp_program/scripts/set-token-metadata.ts`: replaced Web3.js transaction construction with Umi builders; configured signer via `~/.config/solana/basalt.json` or `id.json`; converted mint addresses using `umi.publicKey(...)`.
+  - `basalt_cdp_mvp_program/package.json`: moved `@solana/spl-token` into `dependencies`.
+  - `basalt_cdp_mvp_program/development_log.md`: previously appended entries documenting the refactor and dependency change.
+- Issues/Challenges:
+  - TypeScript diagnostics: missing named exports (`createCreateMetadataAccountV3Instruction`, `createUpdateMetadataAccountV2Instruction`) from `@metaplex-foundation/mpl-token-metadata`.
+- Solutions:
+  - Switched to Umi-compatible builder functions provided by `mpl-token-metadata@3.4.0` and `umi@1.4.1`.
+  - Ensured runtime availability of `@solana/spl-token` by placing it under `dependencies`.
+- Notes:
+  - Did not add `@solana/spl-token-metadata` (project uses Metaplex Token Metadata).
+  - Did not add `dotenv` since scripts parse `.env` manually.
+
 ## 2025-11-12 15:20 UTC — Public-first CoinGecko fallback; no private API key needed
 
 - Description: Fixed persistent `CoinGecko error 400` by switching the SPYX price server to prefer the public CoinGecko API first and only use Pro when explicitly required. This removes dependency on the private API key for normal operation while still supporting Pro keys when public denies access.
@@ -1524,3 +1543,101 @@ Derived dedicated PDAs to serve as mint authorities for the mock SPYx collateral
   - Dev server is running at `http://localhost:3000/`.
   - Price server logs show listening on `http://localhost:3001`.
   - Frontend fetch expected to succeed via Vite proxy `/api/spyx-price` with fresh USDC price and timestamp.
+## 2025-11-12 07:13 UTC — Installed Metaplex Token Metadata package locally
+
+- Task: Install `@metaplex-foundation/mpl-token-metadata` for token metadata operations.
+- Commands run: `npm install @metaplex-foundation/mpl-token-metadata --legacy-peer-deps` in `basalt_cdp_mvp_program`.
+- Changes: Added dependency `@metaplex-foundation/mpl-token-metadata@^3.4.0` to `basalt_cdp_mvp_program/package.json` and `package-lock.json`.
+- Issue: `npm ERR! ERESOLVE` due to peer conflict: `anchor-bankrun@0.5.0` requires `@coral-xyz/anchor@^0.30.0`, project has `@coral-xyz/anchor@0.32.1`.
+- Solution: Installed with `--legacy-peer-deps` to bypass strict peer resolution. Install succeeded; dev server continues running.
+- Notes: `npm audit` reports 20 vulnerabilities (17 low, 3 high). Consider `npm audit fix` or dependency upgrades later. If using Bankrun with Anchor 0.32.x, plan to pin compatible versions or update `anchor-bankrun` when feasible.
+## 2025-11-12 - USDrw Metadata CPI Fix, Build, and Deploy
+
+### Task: Implement Metaplex CPI for USDrw metadata and deploy
+**Date**: 2025-11-12 14:20 UTC
+**Description**: Fixed and completed the CPI-based creation of USDrw token metadata via the Anchor program, compiled successfully, deployed to devnet, and executed the TypeScript script to create metadata on-chain.
+
+### Code Changes:
+1. **programs/basalt_cdp_mvp/src/instructions/create_usdrw_metadata.rs**:
+   - Updated imports to `mpl_token_metadata::accounts::Metadata` and `mpl_token_metadata::instructions::{CreateMetadataAccountV3, CreateMetadataAccountV3InstructionArgs}`.
+   - Replaced deprecated `pda::find_metadata_account` with `Metadata::find_pda(&mint)`.
+   - Corrected struct fields to match v5.1.1: added `system_program`, `rent: Some(...)`; removed unsupported `token_standard` and moved data into `CreateMetadataAccountV3InstructionArgs`.
+   - Fixed type mismatches: used `metadata_pda` (not tuple), `update_authority: (Pubkey, true)`, kept `mint_authority` as `Pubkey`.
+   - Added sanity check to ensure passed `metadata_account` matches derived PDA and routed CPI via `invoke_signed` with `protocol_config` seeds.
+2. **programs/basalt_cdp_mvp/Cargo.toml**:
+   - `mpl-token-metadata` pinned to `5.1.1` to resolve dependency selection issues.
+3. **scripts/create-usdrw-metadata-via-program.ts**:
+   - Ensured `rent` account uses `SYSVAR_RENT_PUBKEY` and verified PDA derivations and account mapping.
+
+### Issues & Challenges:
+- API drift between prior Token Metadata usage and `mpl-token-metadata@5.1.1` caused compilation errors (invalid fields like `token_standard`, incorrect `.instruction()` call signature).
+- Type mismatches in generated instruction struct requiring `(Pubkey, bool)` for `update_authority` and `Option<Pubkey>` for `rent`.
+- Build warnings included deprecated `AccountInfo::realloc` and unexpected `cfg` value `anchor-debug`.
+
+### Solutions Implemented:
+- Adopted the v5 instruction pattern: constructed `CreateMetadataAccountV3` and passed `CreateMetadataAccountV3InstructionArgs` with `DataV2`.
+- Adjusted field types and PDA extraction (`Metadata::find_pda` returns `(Pubkey, u8)`; used the `Pubkey`).
+- Built the program successfully and deployed to devnet.
+- Executed the metadata creation script to create the USDrw metadata via program CPI.
+
+### Results:
+- Build: success (`anchor build`).
+- Deploy: success (`anchor deploy`), Program Id: `5gzoSxVDDSjdE3pPYu9GuyaDAyV2uBXm34BvWa5epsv3`.
+- Metadata creation: success.
+  - Metadata PDA: `Eo9AxrfMZNHRsHNQs4UgakmjnQKc4X2Fnk5N1qfQ8FvW`
+  - Tx: `5a7veLu3hhRpXpWHNqo4CLafnc14zFkyeyovBHReMztQ3A1tRvf91dLrNiYyx4BjxVSzXuWCu2tmqqHanPrdU9x`
+  - Explorer: `https://explorer.solana.com/tx/5a7veLu3hhRpXpWHNqo4CLafnc14zFkyeyovBHReMztQ3A1tRvf91dLrNiYyx4BjxVSzXuWCu2tmqqHanPrdU9x?cluster=devnet`
+
+### Next Steps:
+- Add a read/verify script to fetch and print on-chain metadata fields for USDrw.
+- Address build warnings (replace `realloc` with `resize`, consider feature cleanup for `anchor-debug`).
+## 2025-11-12 - mSPYx Metadata Creation via Umi
+
+### Task: Add metadata for Mock SPYx (mSPYx) on devnet
+**Date**: 2025-11-12 14:36 UTC
+**Description**: Implemented and executed a Umi-based script to create Metaplex Token Metadata for the mSPYx mint on Solana devnet.
+
+### Code Changes:
+1. **scripts/set-token-metadata.ts**:
+   - Fixed imports by removing unsupported default import pattern and switched to Umi approach for SPYx via a separate script.
+   - Left USDrw handling in place for reference.
+2. **scripts/create-spyx-metadata-umi.ts** (new):
+   - Created a Umi-based metadata creation script using `mplTokenMetadata` plugin.
+   - Loads wallet from `~/.config/solana/basalt.json` and sets identity via `signerIdentity`.
+   - Derives Metadata PDA with `findMetadataPda` and calls `createMetadataAccountV3`.
+
+### Issues & Challenges:
+- JS SDK version (`@metaplex-foundation/mpl-token-metadata@3.4.0`) does not expose `createCreateMetadataAccountV3Instruction` in the default import; named export usage failed under ESM.
+- Needed to use Umi’s builder-based API (`createMetadataAccountV3`) and plugin (`mplTokenMetadata`).
+- Transaction signature returned as a byte array; explorer link stringization requires base58 encoding.
+
+### Solutions Implemented:
+- Switched to Umi client (`@metaplex-foundation/umi-bundle-defaults`) with `mplTokenMetadata`.
+- Built and confirmed the metadata creation via `sendAndConfirm`.
+
+### Results:
+- mSPYx Metadata PDA: `3rvkhYJZ98a7WHuFHhc2tyqnVtX5X9Lkx65GnN3wsANs` (derivation confirmed).
+- Transaction submitted and confirmed; signature bytes returned by Umi (logged). Use an external base58 encoder to stringify for explorer if needed.
+
+### Next Steps:
+- Add base58 signature formatting for explorer URL in the Umi script.
+- Optionally unify metadata scripts to standardize on Umi for both USDrw and SPYx.
+## 2025-11-12 14:32 UTC — Fix TypeScript diagnostics in set-token-metadata.ts
+
+- Task: Resolve TypeScript diagnostics complaining about missing MPL named exports in `scripts/set-token-metadata.ts`.
+- Issues:
+  - `"@metaplex-foundation/mpl-token-metadata" has no exported member named 'createCreateMetadataAccountV3Instruction'.`
+  - `"@metaplex-foundation/mpl-token-metadata" has no exported member named 'createUpdateMetadataAccountV2Instruction'.`
+- Changes:
+  - Refactored `scripts/set-token-metadata.ts` to use Umi builder APIs instead of legacy MPL named exports.
+  - Replaced Web3.js transaction construction with Umi builders: `createMetadataAccountV3`, `updateMetadataAccountV2`, and `findMetadataPda`.
+  - Switched mint handling to base58 strings and used `umi.publicKey(...)` conversion.
+  - Loaded signer from `~/.config/solana/basalt.json` or `id.json` and configured `signerIdentity` on Umi.
+  - Implemented `createOrUpdateMetadataUmi(...)` to attempt create first, then update if account exists.
+- Rationale:
+  - The installed `@metaplex-foundation/mpl-token-metadata@3.4.0` exposes builder functions via Umi and does not offer the legacy CommonJS named exports used previously.
+- Result:
+  - Invalid imports removed; script now relies on Umi-compatible APIs, which should eliminate the diagnostics in the editor.
+- Next steps:
+  - Run `npx ts-node basalt_cdp_mvp_program/scripts/set-token-metadata.ts` to validate runtime.
+  - If USDrw mint authority is a PDA, keep using the on-chain CPI path for creation; this script can handle updates when creation is restricted.

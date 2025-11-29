@@ -1,0 +1,47 @@
+chunk-OTCB756S.js?v=d3614cfd:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+chunk-N7WD2QIV.js?v=d3614cfd:23 Lit is in dev mode. Not recommended for production! See https://lit.dev/msg/dev-mode for more information.
+issueWarning @ chunk-N7WD2QIV.js?v=d3614cfd:23
+(anonymous) @ chunk-N7WD2QIV.js?v=d3614cfd:28
+App.tsx:127  GET http://localhost:3000/api/spyx-price 500 (Internal Server Error)
+fetchSpyxPrice @ App.tsx:127
+(anonymous) @ App.tsx:150
+commitHookEffectListMount @ chunk-OTCB756S.js?v=d3614cfd:16963
+commitPassiveMountOnFiber @ chunk-OTCB756S.js?v=d3614cfd:18206
+commitPassiveMountEffects_complete @ chunk-OTCB756S.js?v=d3614cfd:18179
+commitPassiveMountEffects_begin @ chunk-OTCB756S.js?v=d3614cfd:18169
+commitPassiveMountEffects @ chunk-OTCB756S.js?v=d3614cfd:18159
+flushPassiveEffectsImpl @ chunk-OTCB756S.js?v=d3614cfd:19543
+flushPassiveEffects @ chunk-OTCB756S.js?v=d3614cfd:19500
+performSyncWorkOnRoot @ chunk-OTCB756S.js?v=d3614cfd:18921
+flushSyncCallbacks @ chunk-OTCB756S.js?v=d3614cfd:9166
+commitRootImpl @ chunk-OTCB756S.js?v=d3614cfd:19485
+commitRoot @ chunk-OTCB756S.js?v=d3614cfd:19330
+finishConcurrentRender @ chunk-OTCB756S.js?v=d3614cfd:18858
+performConcurrentWorkOnRoot @ chunk-OTCB756S.js?v=d3614cfd:18768
+workLoop @ chunk-OTCB756S.js?v=d3614cfd:197
+flushWork @ chunk-OTCB756S.js?v=d3614cfd:176
+performWorkUntilDeadline @ chunk-OTCB756S.js?v=d3614cfd:384
+App.tsx:142 Error fetching SPYX price: Error: Price API failed: {"error":"CoinGecko error 400: {\"timestamp\":\"2025-11-12T06:12:30.890+00:00\",\"error_code\":10010,\"status\":{\"error_message\":\"If you are using Pro API key, please change your root URL from api.coingecko.com to pro-api.coingecko.com  Please refer here for more details: https://docs.coingecko.com/reference/authentication\"}}"}
+    at fetchSpyxPrice (App.tsx:130:15)
+fetchSpyxPrice @ App.tsx:142
+await in fetchSpyxPrice
+(anonymous) @ App.tsx:150
+commitHookEffectListMount @ chunk-OTCB756S.js?v=d3614cfd:16963
+commitPassiveMountOnFiber @ chunk-OTCB756S.js?v=d3614cfd:18206
+commitPassiveMountEffects_complete @ chunk-OTCB756S.js?v=d3614cfd:18179
+commitPassiveMountEffects_begin @ chunk-OTCB756S.js?v=d3614cfd:18169
+commitPassiveMountEffects @ chunk-OTCB756S.js?v=d3614cfd:18159
+flushPassiveEffectsImpl @ chunk-OTCB756S.js?v=d3614cfd:19543
+flushPassiveEffects @ chunk-OTCB756S.js?v=d3614cfd:19500
+performSyncWorkOnRoot @ chunk-OTCB756S.js?v=d3614cfd:18921
+flushSyncCallbacks @ chunk-OTCB756S.js?v=d3614cfd:9166
+commitRootImpl @ chunk-OTCB756S.js?v=d3614cfd:19485
+commitRoot @ chunk-OTCB756S.js?v=d3614cfd:19330
+finishConcurrentRender @ chunk-OTCB756S.js?v=d3614cfd:18858
+performConcurrentWorkOnRoot @ chunk-OTCB756S.js?v=d3614cfd:18768
+workLoop @ chunk-OTCB756S.js?v=d3614cfd:197
+flushWork @ chunk-OTCB756S.js?v=d3614cfd:176
+performWorkUntilDeadline @ chunk-OTCB756S.js?v=d3614cfd:384
+content-all.js:1 Uncaught (in promise) Error: Cannot find menu item with id translate-page
+    at y (content-all.js:1:57697)
+y @ content-all.js:1

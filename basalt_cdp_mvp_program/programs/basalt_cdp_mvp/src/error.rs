@@ -78,4 +78,12 @@ pub enum CdpError {
     /// Error when mint configuration is invalid
     #[msg("Invalid mint configuration")]
     InvalidMintConfiguration,
+
+    /// Error when a provided account is invalid or does not match expectations
+    #[msg("Invalid account provided")]
+    InvalidAccount,
+
+    /// Error when a CPI to an external program fails
+    #[msg("Cross-program invocation failed")]
+    CpiError,
 }
