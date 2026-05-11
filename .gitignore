@@ -67,3 +67,23 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Added by Security Audit
+bower_components/
+jspm_packages/
+pnpm-lock.yaml
+yarn.lock
+.next/
+out/
+.cache/
+.tauri/
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+logs/
